@@ -38,14 +38,14 @@ class LOQED extends events_1.default {
         if (!options.ip) {
             throw new Error('No IP address provided');
         }
-        if (!options.auth) {
+        if (!options.authToken) {
             throw new Error('No auth information provided');
         }
         if (!options.apiKey) {
             throw new Error('No API key provided');
         }
         // The lock token is provided as base64 encoded but we need it decoded
-        this.auth = Buffer.from(options.auth, 'base64').toString();
+        this.authToken = Buffer.from(options.authToken, 'base64').toString();
         this.ip = options.ip;
         this.port = options.port || DEFAULT_PORT;
         this.apiKey = options.apiKey;
@@ -94,6 +94,18 @@ class LOQED extends events_1.default {
         }
     }
     /**
+     * Registers a new webhook for the ip address and port
+     */
+    async registerWebhook() {
+        // TODO
+    }
+    /**
+     * Deletes a webhook
+     */
+    async deleteWebhook() {
+        // TODO
+    }
+    /**
      * Creates the webhook auth header
      * @param input the input needed in the hash in addition to timestamp and auth token
      */
@@ -103,7 +115,7 @@ class LOQED extends events_1.default {
         bufTimestamp.writeBigInt64BE(BigInt(timestamp));
         const hash = crypto
             .createHash('sha256')
-            .update(input + bufTimestamp + this.auth)
+            .update(input + bufTimestamp + this.authToken)
             .digest('hex');
         return { TIMESTAMP: timestamp, HASH: hash };
     }
@@ -111,6 +123,18 @@ class LOQED extends events_1.default {
      * Opens the lock via API request
      */
     async openLock() {
+        // TODO
+    }
+    /**
+     * Puts lock in DAY_LOCK position
+     */
+    async latchLock() {
+        // TODO
+    }
+    /**
+     * Locks the lock
+     */
+    async lockLock() {
         // TODO
     }
     async getStatus() {

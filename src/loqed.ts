@@ -29,9 +29,9 @@ interface LOQEDOptions {
     ip: string;
     /** Port where the server will listen on, default is 9005 */
     port?: number;
-    /** Auth token of the bridge, can be found at https://app.loqed.com/API-Config */
-    auth: string;
-    /** API key of the registered API */
+    /** Auth token of the bridge, to manage webhooks */
+    authToken: string;
+    /** API key to control lock*/
     apiKey: string;
 }
 
@@ -63,7 +63,7 @@ export class LOQED extends EventEmitter {
     private readonly ip: string;
     private server: express.Express;
     private readonly port: number;
-    private readonly auth: string;
+    private readonly authToken: string;
     private apiKey: string;
 
     constructor(options: LOQEDOptions) {
@@ -73,7 +73,7 @@ export class LOQED extends EventEmitter {
             throw new Error('No IP address provided');
         }
 
-        if (!options.auth) {
+        if (!options.authToken) {
             throw new Error('No auth information provided');
         }
 
@@ -82,7 +82,7 @@ export class LOQED extends EventEmitter {
         }
 
         // The lock token is provided as base64 encoded but we need it decoded
-        this.auth = Buffer.from(options.auth, 'base64').toString();
+        this.authToken = Buffer.from(options.authToken, 'base64').toString();
         this.ip = options.ip;
         this.port = options.port || DEFAULT_PORT;
         this.apiKey = options.apiKey;
@@ -161,7 +161,7 @@ export class LOQED extends EventEmitter {
 
         const hash = crypto
             .createHash('sha256')
-            .update(input + bufTimestamp + this.auth)
+            .update(input + bufTimestamp + this.authToken)
             .digest('hex');
 
         return { TIMESTAMP: timestamp, HASH: hash };

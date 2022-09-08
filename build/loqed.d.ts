@@ -5,9 +5,9 @@ interface LOQEDOptions {
     ip: string;
     /** Port where the server will listen on, default is 9005 */
     port?: number;
-    /** Auth token of the bridge, can be found at https://app.loqed.com/API-Config */
-    auth: string;
-    /** API key of the registered API */
+    /** Auth token of the bridge, to manage webhooks */
+    authToken: string;
+    /** API key to control lock*/
     apiKey: string;
 }
 export interface StatusInformation {
@@ -30,7 +30,7 @@ export declare class LOQED extends EventEmitter {
     private readonly ip;
     private server;
     private readonly port;
-    private readonly auth;
+    private readonly authToken;
     private apiKey;
     constructor(options: LOQEDOptions);
     /**
@@ -42,6 +42,14 @@ export declare class LOQED extends EventEmitter {
      */
     listWebhooks(): Promise<any>;
     /**
+     * Registers a new webhook for the ip address and port
+     */
+    registerWebhook(): Promise<void>;
+    /**
+     * Deletes a webhook
+     */
+    deleteWebhook(): Promise<void>;
+    /**
      * Creates the webhook auth header
      * @param input the input needed in the hash in addition to timestamp and auth token
      */
@@ -50,6 +58,14 @@ export declare class LOQED extends EventEmitter {
      * Opens the lock via API request
      */
     openLock(): Promise<void>;
+    /**
+     * Puts lock in DAY_LOCK position
+     */
+    latchLock(): Promise<void>;
+    /**
+     * Locks the lock
+     */
+    lockLock(): Promise<void>;
     getStatus(): Promise<StatusInformation>;
 }
 export {};
