@@ -1,4 +1,3 @@
-//import * as CryptoJS from 'crypto';
 import * as CryptoJS from 'crypto-js';
 
 type Action = 'open' | 'day_lock' | 'lock' | 'open_electronic_door';
@@ -10,7 +9,7 @@ type Action = 'open' | 'day_lock' | 'lock' | 'open_electronic_door';
  * @param lockId id of the lock
  * @param secret api key not url encoded
  */
-export function createCommand(action: Action, lockId: number, secret: string) {
+export function createCommand(action: Action, lockId: number, secret: string): string {
     let base64command = null;
     switch (action) {
         case 'open':
@@ -44,7 +43,7 @@ function makeCommand(key_id: number, command_type: number, action: number, secre
     const messageId = 0;
     const messageId_bin = CryptoJS.lib.WordArray.create([0, messageId]);
 
-    const getBin = (value: number) => CryptoJS.enc.Utf8.parse(String.fromCharCode(value));
+    const getBin = (value: number): CryptoJS.lib.WordArray => CryptoJS.enc.Utf8.parse(String.fromCharCode(value));
     const protocol = 2;
     const device_id = 1;
     const time = Math.floor(Date.now() / 1000);

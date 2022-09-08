@@ -24,7 +24,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createCommand = void 0;
-//import * as CryptoJS from 'crypto';
 const CryptoJS = __importStar(require("crypto-js"));
 /**
  * Creates the command encoded url
