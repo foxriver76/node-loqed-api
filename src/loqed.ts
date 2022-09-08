@@ -196,4 +196,11 @@ export class LOQED extends EventEmitter {
             throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
         }
     }
+
+    /**
+     * Finds bridges in network via MDNS
+     */
+    static async findBridges(): Promise<void> {
+        // TODO
+    }
 }
