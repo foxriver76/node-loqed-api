@@ -26,7 +26,7 @@ interface LOQEDRegisterdWebhook {
     trigger_battery: LOQEDBinary;
     trigger_online_status: LOQEDBinary;
 }
-export interface StatusInformation {
+export interface LOQEDStatusInformation {
     battery_percentage: number;
     battery_type: string;
     battery_type_numeric: number;
@@ -67,7 +67,7 @@ export declare class LOQED extends EventEmitter {
      *
      * @param webhookId id of the webhook which will be deleted
      */
-    deleteWebhook(webhookId: string): Promise<void>;
+    deleteWebhook(webhookId: number): Promise<void>;
     /**
      * Opens the lock via API request
      */
@@ -80,6 +80,6 @@ export declare class LOQED extends EventEmitter {
      * Locks the lock
      */
     lockLock(): Promise<void>;
-    getStatus(): Promise<StatusInformation>;
+    getStatus(): Promise<LOQEDStatusInformation>;
 }
 export {};

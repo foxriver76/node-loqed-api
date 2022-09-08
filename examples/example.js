@@ -2,7 +2,7 @@ const { LOQED } = require('./../build/loqed');
 
 (async () => {
     const loqedClient = new LOQED({
-        authToken: 'cGcZTr6LdFL3PIf67QBbeaEUH2YHMmlryM5ZfDma38M=',
+        bridgeKey: 'cGcZTr6LdFL3PIf67QBbeaEUH2YHMmlryM5ZfDma38M=',
         apiKey: '8yBMfXdZXZTOYHL5AKrBGt62J4Rvk0DMdJJilh6jen4=',
         ip: '192.168.178.232',
         port: 9005,
@@ -10,10 +10,24 @@ const { LOQED } = require('./../build/loqed');
     });
 
     try {
+        await loqedClient.registerWebhook();
+        console.log('Sucessfully registered webhook');
+    } catch (e) {
+        console.error(`Cannot register webhook: ${e.message}`);
+    }
+
+    try {
         const webhooks = await loqedClient.listWebhooks();
-        console.log(webhooks);
+        console.log(`Registerd webhooks: ${JSON.stringify(webhooks)}`);
     } catch (e) {
         console.error(`Cannot list webhooks: ${e.message}`);
+    }
+
+    try {
+        await loqedClient.deleteWebhook(5);
+        console.log('Webhook sucessfully deleted');
+    } catch (e) {
+        console.error(`Cannot delete webhook: ${e.message}`);
     }
 
     loqedClient.on('UNKNOWN_EVENT', event => {

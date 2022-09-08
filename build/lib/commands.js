@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.generateWebhookHeader = exports.createCommand = void 0;
+exports.generateWebhookHeader = exports.getBin = exports.createCommand = void 0;
 const CryptoJS = __importStar(require("crypto-js"));
 /**
  * Creates the command encoded url
@@ -58,6 +58,15 @@ function createCommand(action, lockId, secret) {
 }
 exports.createCommand = createCommand;
 /**
+ * Parse number to binary
+ *
+ * @param value number to parse as binary
+ */
+function getBin(value) {
+    return CryptoJS.enc.Utf8.parse(String.fromCharCode(value));
+}
+exports.getBin = getBin;
+/**
  * Prepare a command to send to the LOQED api
  *
  * @param action action to execute
@@ -68,7 +77,6 @@ exports.createCommand = createCommand;
 function makeCommand(lockId, commandType, action, secret) {
     const messageId = 0;
     const messageId_bin = CryptoJS.lib.WordArray.create([0, messageId]);
-    const getBin = (value) => CryptoJS.enc.Utf8.parse(String.fromCharCode(value));
     const protocol = 2;
     const device_id = 1;
     const time = Math.floor(Date.now() / 1000);
@@ -106,14 +114,15 @@ function makeCommand(lockId, commandType, action, secret) {
 }
 /**
  * Creates the webhook auth header
+ *
  * @param secret the auth token of the Bridge
  * @param input the input needed in the hash in addition to timestamp and auth token
  */
-function generateWebhookHeader(secret, input = '') {
+function generateWebhookHeader(secret, input) {
     const timestamp = Math.round(Date.now() / 1000);
     const secretBin = CryptoJS.lib.WordArray.create(CryptoJS.enc.Base64.parse(secret).words.slice(0, 8));
     const timeNowBin = CryptoJS.lib.WordArray.create([0, timestamp]);
-    const localGeneratedBinaryHash = timeNowBin.concat(secretBin);
+    const localGeneratedBinaryHash = input.concat(timeNowBin.concat(secretBin));
     const hash = CryptoJS.SHA256(localGeneratedBinaryHash).toString();
     return { TIMESTAMP: timestamp.toString(), HASH: hash.toString() };
 }

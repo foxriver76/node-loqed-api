@@ -1,8 +1,9 @@
 import EventEmitter from 'events';
 import express from 'express';
 import axios from 'axios';
-import { DEFAULT_PORT } from './lib/constants';
+import { DEFAULT_PORT, WEBHOOK_ALL_EVENTS_FLAG } from './lib/constants';
 import { createCommand, generateWebhookHeader } from './lib/commands';
+import * as CryptoJS from 'crypto-js';
 
 type LOQEDEventType =
     | 'STATE_CHANGED_OPEN'
@@ -53,6 +54,8 @@ interface LOQEDRegisterdWebhook {
     trigger_battery: LOQEDBinary;
     trigger_online_status: LOQEDBinary;
 }
+
+type LOQEDWebhook = Omit<LOQEDRegisterdWebhook, 'id'>;
 
 export interface LOQEDStatusInformation {
     battery_percentage: number;
@@ -141,7 +144,7 @@ export class LOQED extends EventEmitter {
         try {
             const res = await axios.get(`http://${this.ip}/webhooks`, {
                 // @ts-expect-error it seems to be correct
-                headers: generateWebhookHeader(this.bridgeKey)
+                headers: generateWebhookHeader(this.bridgeKey, CryptoJS.lib.WordArray.create())
             });
             return res.data;
         } catch (e: any) {
@@ -153,8 +156,10 @@ export class LOQED extends EventEmitter {
      * Registers a new webhook for the ip address and port
      */
     async registerWebhook(): Promise<void> {
-        const postData = {
-            url: `http://${this.ip}${this.port}/`,
+        const callbackUrl = `http://${this.ip}${this.port}/`;
+
+        const postData: LOQEDWebhook = {
+            url: callbackUrl,
             trigger_state_changed_open: 1,
             trigger_state_changed_latch: 1,
             trigger_state_changed_night_lock: 1,
@@ -168,8 +173,15 @@ export class LOQED extends EventEmitter {
 
         try {
             await axios.post(`http://${this.ip}/webhooks`, postData, {
-                // @ts-expect-error it seems to be correct
-                headers: { 'Content-Type': 'application/json', ...generateWebhookHeader(this.bridgeKey, webhookId) }
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...generateWebhookHeader(
+                        this.bridgeKey,
+                        CryptoJS.enc.Utf8.parse(callbackUrl).concat(
+                            CryptoJS.lib.WordArray.create([0, WEBHOOK_ALL_EVENTS_FLAG])
+                        )
+                    )
+                }
             });
         } catch (e: any) {
             throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
@@ -181,11 +193,11 @@ export class LOQED extends EventEmitter {
      *
      * @param webhookId id of the webhook which will be deleted
      */
-    async deleteWebhook(webhookId: string): Promise<void> {
+    async deleteWebhook(webhookId: number): Promise<void> {
         try {
-            await axios.delete(`http://${this.ip}/webhooks`, {
+            await axios.delete(`http://${this.ip}/webhooks/${webhookId}`, {
                 // @ts-expect-error it seems to be correct
-                headers: generateWebhookHeader(this.bridgeKey, webhookId)
+                headers: generateWebhookHeader(this.bridgeKey, CryptoJS.lib.WordArray.create([0, webhookId]))
             });
         } catch (e: any) {
             throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);

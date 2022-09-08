@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -9,6 +32,7 @@ const express_1 = __importDefault(require("express"));
 const axios_1 = __importDefault(require("axios"));
 const constants_1 = require("./lib/constants");
 const commands_1 = require("./lib/commands");
+const CryptoJS = __importStar(require("crypto-js"));
 class LOQED extends events_1.default {
     constructor(options) {
         super();
@@ -62,7 +86,7 @@ class LOQED extends events_1.default {
         try {
             const res = await axios_1.default.get(`http://${this.ip}/webhooks`, {
                 // @ts-expect-error it seems to be correct
-                headers: (0, commands_1.generateWebhookHeader)(this.bridgeKey)
+                headers: (0, commands_1.generateWebhookHeader)(this.bridgeKey, CryptoJS.lib.WordArray.create())
             });
             return res.data;
         }
@@ -74,8 +98,9 @@ class LOQED extends events_1.default {
      * Registers a new webhook for the ip address and port
      */
     async registerWebhook() {
+        const callbackUrl = `http://${this.ip}${this.port}/`;
         const postData = {
-            url: `http://${this.ip}${this.port}/`,
+            url: callbackUrl,
             trigger_state_changed_open: 1,
             trigger_state_changed_latch: 1,
             trigger_state_changed_night_lock: 1,
@@ -88,8 +113,10 @@ class LOQED extends events_1.default {
         };
         try {
             await axios_1.default.post(`http://${this.ip}/webhooks`, postData, {
-                // @ts-expect-error it seems to be correct
-                headers: { 'Content-Type': 'application/json', ...(0, commands_1.generateWebhookHeader)(this.bridgeKey, webhookId) }
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(0, commands_1.generateWebhookHeader)(this.bridgeKey, CryptoJS.enc.Utf8.parse(callbackUrl).concat(CryptoJS.lib.WordArray.create([0, constants_1.WEBHOOK_ALL_EVENTS_FLAG])))
+                }
             });
         }
         catch (e) {
@@ -103,9 +130,9 @@ class LOQED extends events_1.default {
      */
     async deleteWebhook(webhookId) {
         try {
-            await axios_1.default.delete(`http://${this.ip}/webhooks`, {
+            await axios_1.default.delete(`http://${this.ip}/webhooks/${webhookId}`, {
                 // @ts-expect-error it seems to be correct
-                headers: (0, commands_1.generateWebhookHeader)(this.bridgeKey, webhookId)
+                headers: (0, commands_1.generateWebhookHeader)(this.bridgeKey, CryptoJS.lib.WordArray.create([0, webhookId]))
             });
         }
         catch (e) {

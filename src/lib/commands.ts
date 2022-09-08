@@ -42,6 +42,15 @@ export function createCommand(action: LOQEDAction, lockId: number, secret: strin
 }
 
 /**
+ * Parse number to binary
+ *
+ * @param value number to parse as binary
+ */
+export function getBin(value: number): CryptoJS.lib.WordArray {
+    return CryptoJS.enc.Utf8.parse(String.fromCharCode(value));
+}
+
+/**
  * Prepare a command to send to the LOQED api
  *
  * @param action action to execute
@@ -53,7 +62,6 @@ function makeCommand(lockId: number, commandType: number, action: number, secret
     const messageId = 0;
     const messageId_bin = CryptoJS.lib.WordArray.create([0, messageId]);
 
-    const getBin = (value: number): CryptoJS.lib.WordArray => CryptoJS.enc.Utf8.parse(String.fromCharCode(value));
     const protocol = 2;
     const device_id = 1;
     const time = Math.floor(Date.now() / 1000);
@@ -98,16 +106,17 @@ function makeCommand(lockId: number, commandType: number, action: number, secret
 
 /**
  * Creates the webhook auth header
+ *
  * @param secret the auth token of the Bridge
  * @param input the input needed in the hash in addition to timestamp and auth token
  */
-export function generateWebhookHeader(secret: string, input = ''): LOQEDWebhookHeader {
+export function generateWebhookHeader(secret: string, input: CryptoJS.lib.WordArray): LOQEDWebhookHeader {
     const timestamp = Math.round(Date.now() / 1000);
 
     const secretBin = CryptoJS.lib.WordArray.create(CryptoJS.enc.Base64.parse(secret).words.slice(0, 8));
     const timeNowBin = CryptoJS.lib.WordArray.create([0, timestamp]);
 
-    const localGeneratedBinaryHash = timeNowBin.concat(secretBin);
+    const localGeneratedBinaryHash = input.concat(timeNowBin.concat(secretBin));
 
     const hash = CryptoJS.SHA256(localGeneratedBinaryHash).toString();
 
