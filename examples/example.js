@@ -5,7 +5,8 @@ const { LOQED } = require('./../build/loqed');
         authToken: 'tgG39ryc5lZXquBpmbZo9DnpGMGYUVrw414kXKofVEI=',
         apiKey: '8yBMfXdZXZTOYHL5AKrBGt62J4Rvk0DMdJJilh6jen4=',
         ip: '192.168.178.232',
-        port: 9005
+        port: 9005,
+        lockId: 2
     });
 
     try {
@@ -29,4 +30,12 @@ const { LOQED } = require('./../build/loqed');
     const status = await loqedClient.getStatus();
     console.log(`Battery level: ${status.battery_percentage} %`);
     console.log(`Lock state: ${status.bolt_state}`);
+
+    try {
+        // await loqedClient.openLock();
+        // await loqedClient.latchLock();
+        // await loqedClient.lockLock();
+    } catch (e) {
+        console.error(`Could not control lock: ${e.message}`);
+    }
 })();

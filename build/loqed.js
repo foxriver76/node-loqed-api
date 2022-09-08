@@ -31,7 +31,8 @@ const events_1 = __importDefault(require("events"));
 const express_1 = __importDefault(require("express"));
 const axios_1 = __importDefault(require("axios"));
 const crypto = __importStar(require("crypto"));
-const DEFAULT_PORT = 9005;
+const constants_1 = require("./lib/constants");
+const commands_1 = require("./lib/commands");
 class LOQED extends events_1.default {
     constructor(options) {
         super();
@@ -47,8 +48,9 @@ class LOQED extends events_1.default {
         // The lock token is provided as base64 encoded but we need it decoded
         this.authToken = Buffer.from(options.authToken, 'base64').toString();
         this.ip = options.ip;
-        this.port = options.port || DEFAULT_PORT;
+        this.port = options.port || constants_1.DEFAULT_PORT;
         this.apiKey = options.apiKey;
+        this.lockId = options.lockId;
         this.server = (0, express_1.default)();
         this._startServer();
     }
@@ -123,19 +125,37 @@ class LOQED extends events_1.default {
      * Opens the lock via API request
      */
     async openLock() {
-        // TODO
+        const signedCommand = (0, commands_1.createCommand)('open', this.lockId, this.apiKey);
+        try {
+            await axios_1.default.get(`http://${this.ip}/to_lock?command_signed_base64=${signedCommand}`);
+        }
+        catch (e) {
+            throw new Error(axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message);
+        }
     }
     /**
      * Puts lock in DAY_LOCK position
      */
     async latchLock() {
-        // TODO
+        const signedCommand = (0, commands_1.createCommand)('day_lock', this.lockId, this.apiKey);
+        try {
+            await axios_1.default.get(`http://${this.ip}/to_lock?command_signed_base64=${signedCommand}`);
+        }
+        catch (e) {
+            throw new Error(axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message);
+        }
     }
     /**
      * Locks the lock
      */
     async lockLock() {
-        // TODO
+        const signedCommand = (0, commands_1.createCommand)('lock', this.lockId, this.apiKey);
+        try {
+            await axios_1.default.get(`http://${this.ip}/to_lock?command_signed_base64=${signedCommand}`);
+        }
+        catch (e) {
+            throw new Error(axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message);
+        }
     }
     async getStatus() {
         try {
@@ -145,6 +165,12 @@ class LOQED extends events_1.default {
         catch (e) {
             throw new Error(axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message);
         }
+    }
+    /**
+     * Finds bridges in network via MDNS
+     */
+    static async findBridges() {
+        // TODO
     }
 }
 exports.LOQED = LOQED;

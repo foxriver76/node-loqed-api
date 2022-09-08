@@ -2,6 +2,8 @@ import EventEmitter from 'events';
 import express from 'express';
 import axios from 'axios';
 import * as crypto from 'crypto';
+import { DEFAULT_PORT, ERROR_NO_LOCK_ID } from './lib/constants';
+import { createCommand } from './lib/commands';
 
 type LOQEDEventType =
     | 'STATE_CHANGED_OPEN'
@@ -33,6 +35,8 @@ interface LOQEDOptions {
     authToken: string;
     /** API key to control lock*/
     apiKey: string;
+    /** id of the lock */
+    lockId: number;
 }
 
 export interface StatusInformation {
@@ -57,14 +61,13 @@ interface WebhookHeader {
     TIMESTAMP: number;
 }
 
-const DEFAULT_PORT = 9005;
-
 export class LOQED extends EventEmitter {
     private readonly ip: string;
     private server: express.Express;
     private readonly port: number;
     private readonly authToken: string;
-    private apiKey: string;
+    private readonly apiKey: string;
+    private readonly lockId: number;
 
     constructor(options: LOQEDOptions) {
         super();
@@ -86,6 +89,7 @@ export class LOQED extends EventEmitter {
         this.ip = options.ip;
         this.port = options.port || DEFAULT_PORT;
         this.apiKey = options.apiKey;
+        this.lockId = options.lockId;
 
         this.server = express();
         this._startServer();
@@ -171,21 +175,39 @@ export class LOQED extends EventEmitter {
      * Opens the lock via API request
      */
     async openLock(): Promise<void> {
-        // TODO
+        const signedCommand = createCommand('open', this.lockId, this.apiKey);
+
+        try {
+            await axios.get(`http://${this.ip}/to_lock?command_signed_base64=${signedCommand}`);
+        } catch (e: any) {
+            throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
+        }
     }
 
     /**
      * Puts lock in DAY_LOCK position
      */
     async latchLock(): Promise<void> {
-        // TODO
+        const signedCommand = createCommand('day_lock', this.lockId, this.apiKey);
+
+        try {
+            await axios.get(`http://${this.ip}/to_lock?command_signed_base64=${signedCommand}`);
+        } catch (e: any) {
+            throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
+        }
     }
 
     /**
      * Locks the lock
      */
     async lockLock(): Promise<void> {
-        // TODO
+        const signedCommand = createCommand('lock', this.lockId, this.apiKey);
+
+        try {
+            await axios.get(`http://${this.ip}/to_lock?command_signed_base64=${signedCommand}`);
+        } catch (e: any) {
+            throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
+        }
     }
 
     async getStatus(): Promise<StatusInformation> {

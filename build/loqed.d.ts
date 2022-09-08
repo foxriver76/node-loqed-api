@@ -9,6 +9,8 @@ interface LOQEDOptions {
     authToken: string;
     /** API key to control lock*/
     apiKey: string;
+    /** id of the lock */
+    lockId: number;
 }
 export interface StatusInformation {
     battery_percentage: number;
@@ -31,7 +33,8 @@ export declare class LOQED extends EventEmitter {
     private server;
     private readonly port;
     private readonly authToken;
-    private apiKey;
+    private readonly apiKey;
+    private readonly lockId;
     constructor(options: LOQEDOptions);
     /**
      * Starts the express server for ingoing webhooks
@@ -67,5 +70,9 @@ export declare class LOQED extends EventEmitter {
      */
     lockLock(): Promise<void>;
     getStatus(): Promise<StatusInformation>;
+    /**
+     * Finds bridges in network via MDNS
+     */
+    static findBridges(): Promise<void>;
 }
 export {};
