@@ -3,7 +3,13 @@ import express from 'express';
 import axios from 'axios';
 import * as crypto from 'crypto';
 
-type LOQEDEventType = 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN' | 'STATE_CHANGED_OPEN' | 'STATE_CHANGED_LATCH';
+type LOQEDEventType =
+    | 'STATE_CHANGED_OPEN'
+    | 'STATE_CHANGED_LATCH'
+    | 'STATE_CHANGED_NIGHT_LOCK'
+    | 'MOTOR_STALL'
+    | 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK'
+    | 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN';
 
 interface LOQEDEvent {
     mac_wifi: string;
@@ -95,12 +101,15 @@ export class LOQED extends EventEmitter {
             const data: LOQEDEvent = req.body;
 
             switch (data.event_type) {
+                case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK':
                 case 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN':
-                    this.emit(data.event_type, data.go_to_state);
+                    this.emit('GO_TO_STATE', data.go_to_state);
                     break;
                 case 'STATE_CHANGED_LATCH':
                 case 'STATE_CHANGED_OPEN':
-                    this.emit(data.event_type, data.requested_state);
+                case 'STATE_CHANGED_NIGHT_LOCK':
+                case 'MOTOR_STALL':
+                    this.emit('STATE_CHANGED', data.requested_state);
                     break;
                 default:
                     this.emit('UNKNOWN_EVENT', data);

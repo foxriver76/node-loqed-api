@@ -8,20 +8,16 @@ const { LOQED } = require('./../build/loqed');
         port: 9005
     });
 
-    loqedClient.on('UNKNOWN_EVENT', data => {
-        console.log(`Unknown event: ${JSON.stringify(data)}`);
+    loqedClient.on('UNKNOWN_EVENT', event => {
+        console.log(`Unknown event: ${JSON.stringify(event)}`);
     });
 
-    loqedClient.on('GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN', data => {
-        console.log(`Lock now tries to go to position: ${data}`);
+    loqedClient.on('GO_TO_STATE', state => {
+        console.log(`Lock now tries to go to position: ${state}`);
     });
 
-    loqedClient.on('STATE_CHANGED_LATCH', data => {
-        console.log(`Lock latched: ${data}`);
-    });
-
-    loqedClient.on('STATE_CHANGED_OPEN', data => {
-        console.log(`Lock opened: ${data}`);
+    loqedClient.on('STATE_CHANGED', state => {
+        console.log(`Lock state changed: ${state}`);
     });
 
     const status = await loqedClient.getStatus();
