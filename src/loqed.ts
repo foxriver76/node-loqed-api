@@ -1,9 +1,8 @@
 import EventEmitter from 'events';
 import express from 'express';
 import axios from 'axios';
-import * as crypto from 'crypto';
-import { DEFAULT_PORT, ERROR_NO_LOCK_ID } from './lib/constants';
-import { createCommand } from './lib/commands';
+import { DEFAULT_PORT } from './lib/constants';
+import { createCommand, generateWebhookHeader } from './lib/commands';
 
 type LOQEDEventType =
     | 'STATE_CHANGED_OPEN'
@@ -56,11 +55,6 @@ export interface StatusInformation {
     ble_strength: number;
 }
 
-interface WebhookHeader {
-    HASH: string;
-    TIMESTAMP: number;
-}
-
 export class LOQED extends EventEmitter {
     private readonly ip: string;
     private server: express.Express;
@@ -84,8 +78,7 @@ export class LOQED extends EventEmitter {
             throw new Error('No API key provided');
         }
 
-        // The lock token is provided as base64 encoded but we need it decoded
-        this.authToken = Buffer.from(options.authToken, 'base64').toString();
+        this.authToken = options.authToken;
         this.ip = options.ip;
         this.port = options.port || DEFAULT_PORT;
         this.apiKey = options.apiKey;
@@ -126,13 +119,13 @@ export class LOQED extends EventEmitter {
     }
 
     /**
-     * Register a new webhook
+     * List existing webhooks
      */
     async listWebhooks(): Promise<any> {
         try {
             const res = await axios.get(`http://${this.ip}/webhooks`, {
                 // @ts-expect-error it seems to be correct
-                headers: this._createWebhookHeaders()
+                headers: generateWebhookHeader(this.authToken)
             });
             return res.data;
         } catch (e: any) {
@@ -144,31 +137,43 @@ export class LOQED extends EventEmitter {
      * Registers a new webhook for the ip address and port
      */
     async registerWebhook(): Promise<void> {
-        // TODO
+        const postData = {
+            url: `http://${this.ip}${this.port}/`,
+            trigger_state_changed_open: 1,
+            trigger_state_changed_latch: 1,
+            trigger_state_changed_night_lock: 1,
+            trigger_state_changed_unknown: 1,
+            trigger_state_goto_open: 1,
+            trigger_state_goto_latch: 1,
+            trigger_state_goto_night_lock: 1,
+            trigger_battery: 1,
+            trigger_online_status: 1
+        };
+
+        try {
+            await axios.post(`http://${this.ip}/webhooks`, postData, {
+                // @ts-expect-error it seems to be correct
+                headers: { 'Content-Type': 'application/json', ...generateWebhookHeader(this.authToken, webhookId) }
+            });
+        } catch (e: any) {
+            throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
+        }
     }
 
     /**
      * Deletes a webhook
+     *
+     * @param webhookId id of the webhook which will be deleted
      */
-    async deleteWebhook(): Promise<void> {
-        // TODO
-    }
-
-    /**
-     * Creates the webhook auth header
-     * @param input the input needed in the hash in addition to timestamp and auth token
-     */
-    private _createWebhookHeaders(input = ''): WebhookHeader {
-        const timestamp = Math.round(Date.now() / 1000);
-        const bufTimestamp = Buffer.alloc(8);
-        bufTimestamp.writeBigInt64BE(BigInt(timestamp));
-
-        const hash = crypto
-            .createHash('sha256')
-            .update(input + bufTimestamp + this.authToken)
-            .digest('hex');
-
-        return { TIMESTAMP: timestamp, HASH: hash };
+    async deleteWebhook(webhookId: string): Promise<void> {
+        try {
+            await axios.delete(`http://${this.ip}/webhooks`, {
+                // @ts-expect-error it seems to be correct
+                headers: generateWebhookHeader(this.authToken, webhookId)
+            });
+        } catch (e: any) {
+            throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
+        }
     }
 
     /**
@@ -217,12 +222,5 @@ export class LOQED extends EventEmitter {
         } catch (e: any) {
             throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
         }
-    }
-
-    /**
-     * Finds bridges in network via MDNS
-     */
-    static async findBridges(): Promise<void> {
-        // TODO
     }
 }

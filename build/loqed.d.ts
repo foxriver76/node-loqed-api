@@ -41,7 +41,7 @@ export declare class LOQED extends EventEmitter {
      */
     private _startServer;
     /**
-     * Register a new webhook
+     * List existing webhooks
      */
     listWebhooks(): Promise<any>;
     /**
@@ -50,13 +50,10 @@ export declare class LOQED extends EventEmitter {
     registerWebhook(): Promise<void>;
     /**
      * Deletes a webhook
+     *
+     * @param webhookId id of the webhook which will be deleted
      */
-    deleteWebhook(): Promise<void>;
-    /**
-     * Creates the webhook auth header
-     * @param input the input needed in the hash in addition to timestamp and auth token
-     */
-    private _createWebhookHeaders;
+    deleteWebhook(webhookId: string): Promise<void>;
     /**
      * Opens the lock via API request
      */
@@ -70,9 +67,5 @@ export declare class LOQED extends EventEmitter {
      */
     lockLock(): Promise<void>;
     getStatus(): Promise<StatusInformation>;
-    /**
-     * Finds bridges in network via MDNS
-     */
-    static findBridges(): Promise<void>;
 }
 export {};

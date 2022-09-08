@@ -1,27 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -30,7 +7,6 @@ exports.LOQED = void 0;
 const events_1 = __importDefault(require("events"));
 const express_1 = __importDefault(require("express"));
 const axios_1 = __importDefault(require("axios"));
-const crypto = __importStar(require("crypto"));
 const constants_1 = require("./lib/constants");
 const commands_1 = require("./lib/commands");
 class LOQED extends events_1.default {
@@ -45,8 +21,7 @@ class LOQED extends events_1.default {
         if (!options.apiKey) {
             throw new Error('No API key provided');
         }
-        // The lock token is provided as base64 encoded but we need it decoded
-        this.authToken = Buffer.from(options.authToken, 'base64').toString();
+        this.authToken = options.authToken;
         this.ip = options.ip;
         this.port = options.port || constants_1.DEFAULT_PORT;
         this.apiKey = options.apiKey;
@@ -81,13 +56,13 @@ class LOQED extends events_1.default {
         });
     }
     /**
-     * Register a new webhook
+     * List existing webhooks
      */
     async listWebhooks() {
         try {
             const res = await axios_1.default.get(`http://${this.ip}/webhooks`, {
                 // @ts-expect-error it seems to be correct
-                headers: this._createWebhookHeaders()
+                headers: (0, commands_1.generateWebhookHeader)(this.authToken)
             });
             return res.data;
         }
@@ -99,27 +74,43 @@ class LOQED extends events_1.default {
      * Registers a new webhook for the ip address and port
      */
     async registerWebhook() {
-        // TODO
+        const postData = {
+            url: `http://${this.ip}${this.port}/`,
+            trigger_state_changed_open: 1,
+            trigger_state_changed_latch: 1,
+            trigger_state_changed_night_lock: 1,
+            trigger_state_changed_unknown: 1,
+            trigger_state_goto_open: 1,
+            trigger_state_goto_latch: 1,
+            trigger_state_goto_night_lock: 1,
+            trigger_battery: 1,
+            trigger_online_status: 1
+        };
+        try {
+            await axios_1.default.post(`http://${this.ip}/webhooks`, postData, {
+                // @ts-expect-error it seems to be correct
+                headers: { 'Content-Type': 'application/json', ...(0, commands_1.generateWebhookHeader)(this.authToken, webhookId) }
+            });
+        }
+        catch (e) {
+            throw new Error(axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message);
+        }
     }
     /**
      * Deletes a webhook
+     *
+     * @param webhookId id of the webhook which will be deleted
      */
-    async deleteWebhook() {
-        // TODO
-    }
-    /**
-     * Creates the webhook auth header
-     * @param input the input needed in the hash in addition to timestamp and auth token
-     */
-    _createWebhookHeaders(input = '') {
-        const timestamp = Math.round(Date.now() / 1000);
-        const bufTimestamp = Buffer.alloc(8);
-        bufTimestamp.writeBigInt64BE(BigInt(timestamp));
-        const hash = crypto
-            .createHash('sha256')
-            .update(input + bufTimestamp + this.authToken)
-            .digest('hex');
-        return { TIMESTAMP: timestamp, HASH: hash };
+    async deleteWebhook(webhookId) {
+        try {
+            await axios_1.default.delete(`http://${this.ip}/webhooks`, {
+                // @ts-expect-error it seems to be correct
+                headers: (0, commands_1.generateWebhookHeader)(this.authToken, webhookId)
+            });
+        }
+        catch (e) {
+            throw new Error(axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message);
+        }
     }
     /**
      * Opens the lock via API request
@@ -165,12 +156,6 @@ class LOQED extends events_1.default {
         catch (e) {
             throw new Error(axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message);
         }
-    }
-    /**
-     * Finds bridges in network via MDNS
-     */
-    static async findBridges() {
-        // TODO
     }
 }
 exports.LOQED = LOQED;

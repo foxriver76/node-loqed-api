@@ -8,8 +8,11 @@ A node module for controlling the smart locks from LOQED via the LOQED API entir
 ```npm install loqed-api --production```
 
 ## Usage Example
-Coming soon...
+Have a look at the `examples` folder to get started.
 
 ## Changelog
+
+### 1.0.0 (2022-09-08)
+* (foxriver76) initial release
 
 

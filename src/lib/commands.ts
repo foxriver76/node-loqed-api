@@ -1,6 +1,11 @@
 import * as CryptoJS from 'crypto-js';
 
-type Action = 'open' | 'day_lock' | 'lock' | 'open_electronic_door';
+export type Action = 'open' | 'day_lock' | 'lock' | 'open_electronic_door';
+
+export interface WebhookHeader {
+    HASH: string;
+    TIMESTAMP: string;
+}
 
 /**
  * Creates the command encoded url
@@ -38,8 +43,13 @@ export function createCommand(action: Action, lockId: number, secret: string): s
 
 /**
  * Prepare a command to send to the LOQED api
+ *
+ * @param action action to execute
+ * @param lockId id of the lock
+ * @param action id of the action
+ * @param secret api key not url encoded
  */
-function makeCommand(key_id: number, command_type: number, action: number, secret: string): string {
+function makeCommand(lockId: number, commandType: number, action: number, secret: string): string {
     const messageId = 0;
     const messageId_bin = CryptoJS.lib.WordArray.create([0, messageId]);
 
@@ -47,33 +57,33 @@ function makeCommand(key_id: number, command_type: number, action: number, secre
     const protocol = 2;
     const device_id = 1;
     const time = Math.floor(Date.now() / 1000);
-    //const time = 1;
+
     const secret_bin = CryptoJS.lib.WordArray.create(CryptoJS.enc.Base64.parse(secret).words.slice(0, 8));
     const timenow_bin = CryptoJS.lib.WordArray.create([0, time]);
 
     const local_generated_binary_hash = getBin(protocol)
-        .concat(getBin(command_type))
+        .concat(getBin(commandType))
         .concat(timenow_bin)
-        .concat(getBin(key_id))
+        .concat(getBin(lockId))
         .concat(getBin(device_id))
         .concat(getBin(action));
 
     const encrypted_binary_hash = CryptoJS.HmacSHA256(local_generated_binary_hash, secret_bin);
 
     let command = null;
-    switch (command_type) {
+    switch (commandType) {
         case 7:
             command = messageId_bin
                 .concat(getBin(protocol))
-                .concat(getBin(command_type))
+                .concat(getBin(commandType))
                 .concat(timenow_bin)
                 .concat(encrypted_binary_hash)
-                .concat(getBin(key_id))
+                .concat(getBin(lockId))
                 .concat(getBin(device_id))
                 .concat(getBin(action));
             break;
         case 89:
-            command = messageId_bin.concat(getBin(protocol)).concat(getBin(command_type)).concat(getBin(action));
+            command = messageId_bin.concat(getBin(protocol)).concat(getBin(commandType)).concat(getBin(action));
             break;
         default:
             console.error('Unknown command type');
@@ -84,4 +94,22 @@ function makeCommand(key_id: number, command_type: number, action: number, secre
     }
 
     return CryptoJS.enc.Base64.stringify(command);
+}
+
+/**
+ * Creates the webhook auth header
+ * @param secret the auth token of the Bridge
+ * @param input the input needed in the hash in addition to timestamp and auth token
+ */
+export function generateWebhookHeader(secret: string, input = ''): WebhookHeader {
+    const timestamp = Math.round(Date.now() / 1000);
+
+    const secretBin = CryptoJS.lib.WordArray.create(CryptoJS.enc.Base64.parse(secret).words.slice(0, 8));
+    const timeNowBin = CryptoJS.lib.WordArray.create([0, timestamp]);
+
+    const localGeneratedBinaryHash = timeNowBin.concat(secretBin);
+
+    const hash = CryptoJS.HmacSHA256(localGeneratedBinaryHash, secretBin);
+
+    return { TIMESTAMP: timestamp.toString(), HASH: hash.toString() };
 }
