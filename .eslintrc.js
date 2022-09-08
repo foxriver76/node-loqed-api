@@ -85,7 +85,10 @@ module.exports = {
         },
         {
             files: ['**/*.js'],
-            parser: 'espree'
+            parser: 'espree',
+            rules: {
+                '@typescript-eslint/no-var-requires': 0
+            }
         }
     ]
 };
