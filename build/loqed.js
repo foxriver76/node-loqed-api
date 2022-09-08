@@ -90,7 +90,7 @@ class LOQED extends events_1.default {
             return res.data;
         }
         catch (e) {
-            throw new Error(`Could not list webhooks: ${axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message}`);
+            throw new Error(axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message);
         }
     }
     /**
@@ -99,9 +99,11 @@ class LOQED extends events_1.default {
      */
     _createWebhookHeaders(input = '') {
         const timestamp = Math.round(Date.now() / 1000);
+        const bufTimestamp = Buffer.alloc(8);
+        bufTimestamp.writeBigInt64BE(BigInt(timestamp));
         const hash = crypto
             .createHash('sha256')
-            .update(input + BigInt(timestamp) + this.auth)
+            .update(input + bufTimestamp + this.auth)
             .digest('hex');
         return { TIMESTAMP: timestamp, HASH: hash };
     }
@@ -117,7 +119,7 @@ class LOQED extends events_1.default {
             return res.data;
         }
         catch (e) {
-            throw new Error(`Could not get status: ${axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message}`);
+            throw new Error(axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message);
         }
     }
 }

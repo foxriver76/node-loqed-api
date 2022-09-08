@@ -132,10 +132,22 @@ export class LOQED extends EventEmitter {
             });
             return res.data;
         } catch (e: any) {
-            throw new Error(
-                `Could not list webhooks: ${axios.isAxiosError(e) && e.response ? e.response.data : e.message}`
-            );
+            throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
         }
+    }
+
+    /**
+     * Registers a new webhook for the ip address and port
+     */
+    async registerWebhook(): Promise<void> {
+        // TODO
+    }
+
+    /**
+     * Deletes a webhook
+     */
+    async deleteWebhook(): Promise<void> {
+        // TODO
     }
 
     /**
@@ -144,10 +156,12 @@ export class LOQED extends EventEmitter {
      */
     private _createWebhookHeaders(input = ''): WebhookHeader {
         const timestamp = Math.round(Date.now() / 1000);
+        const bufTimestamp = Buffer.alloc(8);
+        bufTimestamp.writeBigInt64BE(BigInt(timestamp));
 
         const hash = crypto
             .createHash('sha256')
-            .update(input + BigInt(timestamp) + this.auth)
+            .update(input + bufTimestamp + this.auth)
             .digest('hex');
 
         return { TIMESTAMP: timestamp, HASH: hash };
@@ -160,14 +174,26 @@ export class LOQED extends EventEmitter {
         // TODO
     }
 
+    /**
+     * Puts lock in DAY_LOCK position
+     */
+    async latchLock(): Promise<void> {
+        // TODO
+    }
+
+    /**
+     * Locks the lock
+     */
+    async lockLock(): Promise<void> {
+        // TODO
+    }
+
     async getStatus(): Promise<StatusInformation> {
         try {
             const res = await axios.get(`http://${this.ip}/status`);
             return res.data;
         } catch (e: any) {
-            throw new Error(
-                `Could not get status: ${axios.isAxiosError(e) && e.response ? e.response.data : e.message}`
-            );
+            throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
         }
     }
 }

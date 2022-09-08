@@ -8,6 +8,12 @@ const { LOQED } = require('./../build/loqed');
         port: 9005
     });
 
+    try {
+        await loqedClient.listWebhooks();
+    } catch (e) {
+        console.error(`Cannot list webhooks: ${e.message}`);
+    }
+
     loqedClient.on('UNKNOWN_EVENT', event => {
         console.log(`Unknown event: ${JSON.stringify(event)}`);
     });
