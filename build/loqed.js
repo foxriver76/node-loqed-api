@@ -56,8 +56,20 @@ class LOQED extends events_1.default {
      * Starts the express server for ingoing webhooks
      */
     _startServer() {
-        this.server.get('/', (req, res) => {
-            res.send('Well done!');
+        this.server.use(express_1.default.json());
+        this.server.post('/', req => {
+            const data = req.body;
+            switch (data.event_type) {
+                case 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN':
+                    this.emit(data.event_type, data.go_to_state);
+                    break;
+                case 'STATE_CHANGED_LATCH':
+                case 'STATE_CHANGED_OPEN':
+                    this.emit(data.event_type, data.requested_state);
+                    break;
+                default:
+                    this.emit('UNKNOWN_EVENT', data);
+            }
         });
         this.server.listen(this.port, () => {
             console.log(`The application is listening on port ${this.port}!`);
@@ -84,14 +96,26 @@ class LOQED extends events_1.default {
      */
     _createWebhookHeaders(input = '') {
         const timestamp = Math.round(Date.now() / 1000);
-        const bInt = BigInt(timestamp);
-        const buf = Buffer.from([0, 0, 0, 0, 0, 0, 0, 0]);
-        buf.writeBigInt64LE(bInt);
         const hash = crypto
             .createHash('sha256')
-            .update(input + buf + this.auth)
+            .update(input + BigInt(timestamp) + this.auth)
             .digest('hex');
         return { TIMESTAMP: timestamp, HASH: hash };
+    }
+    /**
+     * Opens the lock via API request
+     */
+    async openLock() {
+        // TODO
+    }
+    async getStatus() {
+        try {
+            const res = await axios_1.default.get(`http://${this.ip}/status`);
+            return res.data;
+        }
+        catch (e) {
+            throw new Error(`Could not get status: ${axios_1.default.isAxiosError(e) && e.response ? e.response.data : e.message}`);
+        }
     }
 }
 exports.LOQED = LOQED;

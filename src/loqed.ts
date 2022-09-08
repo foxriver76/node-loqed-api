@@ -3,6 +3,21 @@ import express from 'express';
 import axios from 'axios';
 import * as crypto from 'crypto';
 
+type LOQEDEventType = 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN' | 'STATE_CHANGED_OPEN' | 'STATE_CHANGED_LATCH';
+
+interface LOQEDEvent {
+    mac_wifi: string;
+    mac_ble: string;
+    event_type: LOQEDEventType;
+    key_local_id: number;
+    /** Exists on STATE_CHANGED_XY */
+    requested_state?: string;
+    /** Exists on STATE_CHANGED_XY */
+    requested_state_numeric?: number;
+    /** EXISTS on GO_TO_STATE_XY */
+    go_to_state?: string;
+}
+
 interface LOQEDOptions {
     /** IP address of the bridge */
     ip: string;
@@ -12,6 +27,23 @@ interface LOQEDOptions {
     auth: string;
     /** API key of the registered API */
     apiKey: string;
+}
+
+export interface StatusInformation {
+    battery_percentage: number;
+    battery_type: string;
+    battery_type_numeric: number;
+    battery_voltage: number;
+    bolt_state: string;
+    bolt_state_numeric: number;
+    bridge_mac_wifi: string;
+    bridge_mac_ble: string;
+    lock_online: number;
+    webhooks_number: number;
+    ip_address: string;
+    up_timestamp: number;
+    wifi_strength: number;
+    ble_strength: number;
 }
 
 interface WebhookHeader {
@@ -57,8 +89,22 @@ export class LOQED extends EventEmitter {
      * Starts the express server for ingoing webhooks
      */
     private _startServer(): void {
-        this.server.get('/', (req, res) => {
-            res.send('Well done!');
+        this.server.use(express.json());
+
+        this.server.post('/', req => {
+            const data: LOQEDEvent = req.body;
+
+            switch (data.event_type) {
+                case 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN':
+                    this.emit(data.event_type, data.go_to_state);
+                    break;
+                case 'STATE_CHANGED_LATCH':
+                case 'STATE_CHANGED_OPEN':
+                    this.emit(data.event_type, data.requested_state);
+                    break;
+                default:
+                    this.emit('UNKNOWN_EVENT', data);
+            }
         });
 
         this.server.listen(this.port, () => {
@@ -96,5 +142,23 @@ export class LOQED extends EventEmitter {
             .digest('hex');
 
         return { TIMESTAMP: timestamp, HASH: hash };
+    }
+
+    /**
+     * Opens the lock via API request
+     */
+    async openLock(): Promise<void> {
+        // TODO
+    }
+
+    async getStatus(): Promise<StatusInformation> {
+        try {
+            const res = await axios.get(`http://${this.ip}/status`);
+            return res.data;
+        } catch (e: any) {
+            throw new Error(
+                `Could not get status: ${axios.isAxiosError(e) && e.response ? e.response.data : e.message}`
+            );
+        }
     }
 }
