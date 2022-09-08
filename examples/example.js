@@ -2,7 +2,7 @@ const { LOQED } = require('./../build/loqed');
 
 (async () => {
     const loqedClient = new LOQED({
-        authToken: 'tgG39ryc5lZXquBpmbZo9DnpGMGYUVrw414kXKofVEI=',
+        authToken: 'cGcZTr6LdFL3PIf67QBbeaEUH2YHMmlryM5ZfDma38M=',
         apiKey: '8yBMfXdZXZTOYHL5AKrBGt62J4Rvk0DMdJJilh6jen4=',
         ip: '192.168.178.232',
         port: 9005,
@@ -10,7 +10,8 @@ const { LOQED } = require('./../build/loqed');
     });
 
     try {
-        await loqedClient.listWebhooks();
+        const webhooks = await loqedClient.listWebhooks();
+        console.log(webhooks);
     } catch (e) {
         console.error(`Cannot list webhooks: ${e.message}`);
     }

@@ -114,7 +114,7 @@ function generateWebhookHeader(secret, input = '') {
     const secretBin = CryptoJS.lib.WordArray.create(CryptoJS.enc.Base64.parse(secret).words.slice(0, 8));
     const timeNowBin = CryptoJS.lib.WordArray.create([0, timestamp]);
     const localGeneratedBinaryHash = timeNowBin.concat(secretBin);
-    const hash = CryptoJS.HmacSHA256(localGeneratedBinaryHash, secretBin);
+    const hash = CryptoJS.SHA256(localGeneratedBinaryHash).toString();
     return { TIMESTAMP: timestamp.toString(), HASH: hash.toString() };
 }
 exports.generateWebhookHeader = generateWebhookHeader;

@@ -15,13 +15,13 @@ class LOQED extends events_1.default {
         if (!options.ip) {
             throw new Error('No IP address provided');
         }
-        if (!options.authToken) {
+        if (!options.bridgeKey) {
             throw new Error('No auth information provided');
         }
         if (!options.apiKey) {
             throw new Error('No API key provided');
         }
-        this.authToken = options.authToken;
+        this.bridgeKey = options.bridgeKey;
         this.ip = options.ip;
         this.port = options.port || constants_1.DEFAULT_PORT;
         this.apiKey = options.apiKey;
@@ -62,7 +62,7 @@ class LOQED extends events_1.default {
         try {
             const res = await axios_1.default.get(`http://${this.ip}/webhooks`, {
                 // @ts-expect-error it seems to be correct
-                headers: (0, commands_1.generateWebhookHeader)(this.authToken)
+                headers: (0, commands_1.generateWebhookHeader)(this.bridgeKey)
             });
             return res.data;
         }
@@ -89,7 +89,7 @@ class LOQED extends events_1.default {
         try {
             await axios_1.default.post(`http://${this.ip}/webhooks`, postData, {
                 // @ts-expect-error it seems to be correct
-                headers: { 'Content-Type': 'application/json', ...(0, commands_1.generateWebhookHeader)(this.authToken, webhookId) }
+                headers: { 'Content-Type': 'application/json', ...(0, commands_1.generateWebhookHeader)(this.bridgeKey, webhookId) }
             });
         }
         catch (e) {
@@ -105,7 +105,7 @@ class LOQED extends events_1.default {
         try {
             await axios_1.default.delete(`http://${this.ip}/webhooks`, {
                 // @ts-expect-error it seems to be correct
-                headers: (0, commands_1.generateWebhookHeader)(this.authToken, webhookId)
+                headers: (0, commands_1.generateWebhookHeader)(this.bridgeKey, webhookId)
             });
         }
         catch (e) {

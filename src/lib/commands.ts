@@ -1,8 +1,8 @@
 import * as CryptoJS from 'crypto-js';
 
-export type Action = 'open' | 'day_lock' | 'lock' | 'open_electronic_door';
+export type LOQEDAction = 'open' | 'day_lock' | 'lock' | 'open_electronic_door';
 
-export interface WebhookHeader {
+export interface LOQEDWebhookHeader {
     HASH: string;
     TIMESTAMP: string;
 }
@@ -14,7 +14,7 @@ export interface WebhookHeader {
  * @param lockId id of the lock
  * @param secret api key not url encoded
  */
-export function createCommand(action: Action, lockId: number, secret: string): string {
+export function createCommand(action: LOQEDAction, lockId: number, secret: string): string {
     let base64command = null;
     switch (action) {
         case 'open':
@@ -101,7 +101,7 @@ function makeCommand(lockId: number, commandType: number, action: number, secret
  * @param secret the auth token of the Bridge
  * @param input the input needed in the hash in addition to timestamp and auth token
  */
-export function generateWebhookHeader(secret: string, input = ''): WebhookHeader {
+export function generateWebhookHeader(secret: string, input = ''): LOQEDWebhookHeader {
     const timestamp = Math.round(Date.now() / 1000);
 
     const secretBin = CryptoJS.lib.WordArray.create(CryptoJS.enc.Base64.parse(secret).words.slice(0, 8));
@@ -109,7 +109,7 @@ export function generateWebhookHeader(secret: string, input = ''): WebhookHeader
 
     const localGeneratedBinaryHash = timeNowBin.concat(secretBin);
 
-    const hash = CryptoJS.HmacSHA256(localGeneratedBinaryHash, secretBin);
+    const hash = CryptoJS.SHA256(localGeneratedBinaryHash).toString();
 
     return { TIMESTAMP: timestamp.toString(), HASH: hash.toString() };
 }

@@ -30,15 +30,31 @@ interface LOQEDOptions {
     ip: string;
     /** Port where the server will listen on, default is 9005 */
     port?: number;
-    /** Auth token of the bridge, to manage webhooks */
-    authToken: string;
+    /** Key token of the bridge, to manage webhooks */
+    bridgeKey: string;
     /** API key to control lock*/
     apiKey: string;
     /** id of the lock */
     lockId: number;
 }
 
-export interface StatusInformation {
+type LOQEDBinary = 0 | 1;
+
+interface LOQEDRegisterdWebhook {
+    id: number;
+    url: string;
+    trigger_state_changed_open: LOQEDBinary;
+    trigger_state_changed_latch: LOQEDBinary;
+    trigger_state_changed_night_lock: LOQEDBinary;
+    trigger_state_changed_unknown: LOQEDBinary;
+    trigger_state_goto_open: LOQEDBinary;
+    trigger_state_goto_latch: LOQEDBinary;
+    trigger_state_goto_night_lock: LOQEDBinary;
+    trigger_battery: LOQEDBinary;
+    trigger_online_status: LOQEDBinary;
+}
+
+export interface LOQEDStatusInformation {
     battery_percentage: number;
     battery_type: string;
     battery_type_numeric: number;
@@ -59,7 +75,7 @@ export class LOQED extends EventEmitter {
     private readonly ip: string;
     private server: express.Express;
     private readonly port: number;
-    private readonly authToken: string;
+    private readonly bridgeKey: string;
     private readonly apiKey: string;
     private readonly lockId: number;
 
@@ -70,7 +86,7 @@ export class LOQED extends EventEmitter {
             throw new Error('No IP address provided');
         }
 
-        if (!options.authToken) {
+        if (!options.bridgeKey) {
             throw new Error('No auth information provided');
         }
 
@@ -78,7 +94,7 @@ export class LOQED extends EventEmitter {
             throw new Error('No API key provided');
         }
 
-        this.authToken = options.authToken;
+        this.bridgeKey = options.bridgeKey;
         this.ip = options.ip;
         this.port = options.port || DEFAULT_PORT;
         this.apiKey = options.apiKey;
@@ -121,11 +137,11 @@ export class LOQED extends EventEmitter {
     /**
      * List existing webhooks
      */
-    async listWebhooks(): Promise<any> {
+    async listWebhooks(): Promise<LOQEDRegisterdWebhook[]> {
         try {
             const res = await axios.get(`http://${this.ip}/webhooks`, {
                 // @ts-expect-error it seems to be correct
-                headers: generateWebhookHeader(this.authToken)
+                headers: generateWebhookHeader(this.bridgeKey)
             });
             return res.data;
         } catch (e: any) {
@@ -153,7 +169,7 @@ export class LOQED extends EventEmitter {
         try {
             await axios.post(`http://${this.ip}/webhooks`, postData, {
                 // @ts-expect-error it seems to be correct
-                headers: { 'Content-Type': 'application/json', ...generateWebhookHeader(this.authToken, webhookId) }
+                headers: { 'Content-Type': 'application/json', ...generateWebhookHeader(this.bridgeKey, webhookId) }
             });
         } catch (e: any) {
             throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
@@ -169,7 +185,7 @@ export class LOQED extends EventEmitter {
         try {
             await axios.delete(`http://${this.ip}/webhooks`, {
                 // @ts-expect-error it seems to be correct
-                headers: generateWebhookHeader(this.authToken, webhookId)
+                headers: generateWebhookHeader(this.bridgeKey, webhookId)
             });
         } catch (e: any) {
             throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);
@@ -215,7 +231,7 @@ export class LOQED extends EventEmitter {
         }
     }
 
-    async getStatus(): Promise<StatusInformation> {
+    async getStatus(): Promise<LOQEDStatusInformation> {
         try {
             const res = await axios.get(`http://${this.ip}/status`);
             return res.data;

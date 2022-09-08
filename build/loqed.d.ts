@@ -5,12 +5,26 @@ interface LOQEDOptions {
     ip: string;
     /** Port where the server will listen on, default is 9005 */
     port?: number;
-    /** Auth token of the bridge, to manage webhooks */
-    authToken: string;
+    /** Key token of the bridge, to manage webhooks */
+    bridgeKey: string;
     /** API key to control lock*/
     apiKey: string;
     /** id of the lock */
     lockId: number;
+}
+declare type LOQEDBinary = 0 | 1;
+interface LOQEDRegisterdWebhook {
+    id: number;
+    url: string;
+    trigger_state_changed_open: LOQEDBinary;
+    trigger_state_changed_latch: LOQEDBinary;
+    trigger_state_changed_night_lock: LOQEDBinary;
+    trigger_state_changed_unknown: LOQEDBinary;
+    trigger_state_goto_open: LOQEDBinary;
+    trigger_state_goto_latch: LOQEDBinary;
+    trigger_state_goto_night_lock: LOQEDBinary;
+    trigger_battery: LOQEDBinary;
+    trigger_online_status: LOQEDBinary;
 }
 export interface StatusInformation {
     battery_percentage: number;
@@ -32,7 +46,7 @@ export declare class LOQED extends EventEmitter {
     private readonly ip;
     private server;
     private readonly port;
-    private readonly authToken;
+    private readonly bridgeKey;
     private readonly apiKey;
     private readonly lockId;
     constructor(options: LOQEDOptions);
@@ -43,7 +57,7 @@ export declare class LOQED extends EventEmitter {
     /**
      * List existing webhooks
      */
-    listWebhooks(): Promise<any>;
+    listWebhooks(): Promise<LOQEDRegisterdWebhook[]>;
     /**
      * Registers a new webhook for the ip address and port
      */
