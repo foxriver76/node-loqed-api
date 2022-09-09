@@ -4,6 +4,7 @@ import axios from 'axios';
 import { DEFAULT_PORT, WEBHOOK_ALL_EVENTS_FLAG } from './lib/constants';
 import { createCommand, generateWebhookHeader } from './lib/commands';
 import * as CryptoJS from 'crypto-js';
+import { Server } from 'net';
 
 type LOQEDEventType =
     | 'STATE_CHANGED_OPEN'
@@ -76,7 +77,7 @@ export interface LOQEDStatusInformation {
 
 export class LOQED extends EventEmitter {
     private readonly ip: string;
-    private server: express.Express;
+    private server: Server | undefined;
     private readonly port: number;
     private readonly bridgeKey: string;
     private readonly apiKey: string;
@@ -103,7 +104,6 @@ export class LOQED extends EventEmitter {
         this.apiKey = options.apiKey;
         this.lockId = options.lockId;
 
-        this.server = express();
         this._startServer();
     }
 
@@ -111,9 +111,11 @@ export class LOQED extends EventEmitter {
      * Starts the express server for ingoing webhooks
      */
     private _startServer(): void {
-        this.server.use(express.json());
+        const app = express();
 
-        this.server.post('/', req => {
+        app.use(express.json());
+
+        app.post('/', req => {
             const data: LOQEDEvent = req.body;
 
             switch (data.event_type) {
@@ -132,8 +134,23 @@ export class LOQED extends EventEmitter {
             }
         });
 
-        this.server.listen(this.port, () => {
+        this.server = app.listen(this.port, () => {
             console.log(`The application is listening on port ${this.port}!`);
+        });
+    }
+
+    /**
+     * Stops the server process
+     */
+    stopServer(): Promise<void> {
+        return new Promise(resolve => {
+            if (!this.server) {
+                return resolve();
+            }
+
+            this.server.close(() => {
+                resolve();
+            });
         });
     }
 

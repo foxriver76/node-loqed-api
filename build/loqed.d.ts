@@ -55,6 +55,10 @@ export declare class LOQED extends EventEmitter {
      */
     private _startServer;
     /**
+     * Stops the server process
+     */
+    stopServer(): Promise<void>;
+    /**
      * List existing webhooks
      */
     listWebhooks(): Promise<LOQEDRegisterdWebhook[]>;

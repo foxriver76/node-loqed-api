@@ -53,4 +53,8 @@ const { LOQED } = require('./../build/loqed');
     } catch (e) {
         console.error(`Could not control lock: ${e.message}`);
     }
+
+    await loqedClient.stopServer();
+    console.log('Server stopped');
+    process.exit();
 })();

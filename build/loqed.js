@@ -50,15 +50,15 @@ class LOQED extends events_1.default {
         this.port = options.port || constants_1.DEFAULT_PORT;
         this.apiKey = options.apiKey;
         this.lockId = options.lockId;
-        this.server = (0, express_1.default)();
         this._startServer();
     }
     /**
      * Starts the express server for ingoing webhooks
      */
     _startServer() {
-        this.server.use(express_1.default.json());
-        this.server.post('/', req => {
+        const app = (0, express_1.default)();
+        app.use(express_1.default.json());
+        app.post('/', req => {
             const data = req.body;
             switch (data.event_type) {
                 case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK':
@@ -75,8 +75,21 @@ class LOQED extends events_1.default {
                     this.emit('UNKNOWN_EVENT', data);
             }
         });
-        this.server.listen(this.port, () => {
+        this.server = app.listen(this.port, () => {
             console.log(`The application is listening on port ${this.port}!`);
+        });
+    }
+    /**
+     * Stops the server process
+     */
+    stopServer() {
+        return new Promise(resolve => {
+            if (!this.server) {
+                return resolve();
+            }
+            this.server.close(() => {
+                resolve();
+            });
         });
     }
     /**

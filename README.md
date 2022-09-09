@@ -12,6 +12,9 @@ Have a look at the `examples` folder to get started.
 
 ## Changelog
 
+### 0.1.1 (2022-09-09)
+* (foxriver76) implemented method to stop the webhook server
+
 ### 0.1.0 (2022-09-09)
 * (foxriver76) initial release
 
