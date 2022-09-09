@@ -60,8 +60,10 @@ export declare class LOQED extends EventEmitter {
     listWebhooks(): Promise<LOQEDRegisterdWebhook[]>;
     /**
      * Registers a new webhook for the ip address and port
+     *
+     * @param callbackUrl url to register webhook
      */
-    registerWebhook(): Promise<void>;
+    registerWebhook(callbackUrl: string): Promise<void>;
     /**
      * Deletes a webhook
      *

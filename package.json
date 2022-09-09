@@ -1,6 +1,6 @@
 {
-  "name": "node-loqed-api",
-  "version": "1.0.0",
+  "name": "loqed-api",
+  "version": "0.1.0",
   "engines": {
     "node": ">=14.0.0"
   },

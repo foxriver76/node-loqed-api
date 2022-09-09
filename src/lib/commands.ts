@@ -120,5 +120,5 @@ export function generateWebhookHeader(secret: string, input: CryptoJS.lib.WordAr
 
     const hash = CryptoJS.SHA256(localGeneratedBinaryHash).toString();
 
-    return { TIMESTAMP: timestamp.toString(), HASH: hash.toString() };
+    return { TIMESTAMP: timestamp.toString(), HASH: hash };
 }

@@ -10,7 +10,7 @@ const { LOQED } = require('./../build/loqed');
     });
 
     try {
-        await loqedClient.registerWebhook();
+        await loqedClient.registerWebhook('http://192.168.178.233:9005/');
         console.log('Sucessfully registered webhook');
     } catch (e) {
         console.error(`Cannot register webhook: ${e.message}`);

@@ -154,10 +154,10 @@ export class LOQED extends EventEmitter {
 
     /**
      * Registers a new webhook for the ip address and port
+     *
+     * @param callbackUrl url to register webhook
      */
-    async registerWebhook(): Promise<void> {
-        const callbackUrl = `http://${this.ip}${this.port}/`;
-
+    async registerWebhook(callbackUrl: string): Promise<void> {
         const postData: LOQEDWebhook = {
             url: callbackUrl,
             trigger_state_changed_open: 1,
