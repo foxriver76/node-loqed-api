@@ -1,6 +1,6 @@
-# Node-Bring-Shopping
-[![NPM version](http://img.shields.io/npm/v/loqed-api.svg)](https://www.npmjs.com/package/bring-shopping)
-[![Downloads](https://img.shields.io/npm/dm/loqed-api.svg)](https://www.npmjs.com/package/bring-shopping)
+# Node LOQED-API
+[![NPM version](http://img.shields.io/npm/v/loqed-api.svg)](https://www.npmjs.com/package/loqed-api)
+[![Downloads](https://img.shields.io/npm/dm/loqed-api.svg)](https://www.npmjs.com/package/loqed-api)
 
 A node module for controlling the smart locks from LOQED via the LOQED API entirely written in TypeScript.
 
