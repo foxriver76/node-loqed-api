@@ -80,7 +80,7 @@ class LOQED extends events_1.default {
                 }
             }
             if ('battery_percentage' in data) {
-                this.emit('BATTERY_LEVEL', data.requested_state);
+                this.emit('BATTERY_LEVEL', data.battery_percentage);
                 return;
             }
             if ('ble_strength' in data) {

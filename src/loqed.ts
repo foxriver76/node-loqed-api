@@ -147,7 +147,7 @@ export class LOQED extends EventEmitter {
             }
 
             if ('battery_percentage' in data) {
-                this.emit('BATTERY_LEVEL', data.requested_state);
+                this.emit('BATTERY_LEVEL', data.battery_percentage);
                 return;
             }
 
