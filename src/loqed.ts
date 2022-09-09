@@ -12,7 +12,8 @@ type LOQEDEventType =
     | 'STATE_CHANGED_NIGHT_LOCK'
     | 'MOTOR_STALL'
     | 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK'
-    | 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN';
+    | 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN'
+    | 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH';
 
 interface LOQEDEvent {
     mac_wifi: string;
@@ -121,6 +122,7 @@ export class LOQED extends EventEmitter {
             switch (data.event_type) {
                 case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK':
                 case 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN':
+                case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH':
                     this.emit('GO_TO_STATE', data.go_to_state);
                     break;
                 case 'STATE_CHANGED_LATCH':

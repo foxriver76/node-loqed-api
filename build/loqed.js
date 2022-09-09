@@ -63,6 +63,7 @@ class LOQED extends events_1.default {
             switch (data.event_type) {
                 case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK':
                 case 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN':
+                case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH':
                     this.emit('GO_TO_STATE', data.go_to_state);
                     break;
                 case 'STATE_CHANGED_LATCH':

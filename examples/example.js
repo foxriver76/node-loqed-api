@@ -47,7 +47,7 @@ const { LOQED } = require('./../build/loqed');
     console.log(`Lock state: ${status.bolt_state}`);
 
     try {
-        // await loqedClient.openLock();
+        await loqedClient.openLock();
         // await loqedClient.latchLock();
         // await loqedClient.lockLock();
     } catch (e) {
