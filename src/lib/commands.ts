@@ -30,7 +30,7 @@ export function createCommand(action: LOQEDAction, lockId: number, secret: strin
             base64command = makeCommand(lockId, 89, 2, secret);
             break;
         default:
-            console.error('Error no valid action');
+            throw new Error('Error no valid action');
     }
 
     if (!base64command) {
@@ -53,8 +53,8 @@ export function getBin(value: number): CryptoJS.lib.WordArray {
 /**
  * Prepare a command to send to the LOQED api
  *
- * @param action action to execute
  * @param lockId id of the lock
+ * @param commandType id of the command
  * @param action id of the action
  * @param secret api key not url encoded
  */
@@ -94,7 +94,7 @@ function makeCommand(lockId: number, commandType: number, action: number, secret
             command = messageId_bin.concat(getBin(protocol)).concat(getBin(commandType)).concat(getBin(action));
             break;
         default:
-            console.error('Unknown command type');
+            throw new Error('Unknown command type');
     }
 
     if (!command) {

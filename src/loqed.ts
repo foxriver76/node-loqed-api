@@ -136,9 +136,7 @@ export class LOQED extends EventEmitter {
             }
         });
 
-        this.server = app.listen(this.port, () => {
-            console.log(`The application is listening on port ${this.port}!`);
-        });
+        this.server = app.listen(this.port);
     }
 
     /**
@@ -197,7 +195,7 @@ export class LOQED extends EventEmitter {
                     ...generateWebhookHeader(
                         this.bridgeKey,
                         CryptoJS.enc.Utf8.parse(callbackUrl).concat(
-                            CryptoJS.lib.WordArray.create([0, WEBHOOK_ALL_EVENTS_FLAG])
+                            CryptoJS.lib.WordArray.create([WEBHOOK_ALL_EVENTS_FLAG])
                         )
                     )
                 }

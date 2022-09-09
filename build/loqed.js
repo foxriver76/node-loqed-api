@@ -76,9 +76,7 @@ class LOQED extends events_1.default {
                     this.emit('UNKNOWN_EVENT', data);
             }
         });
-        this.server = app.listen(this.port, () => {
-            console.log(`The application is listening on port ${this.port}!`);
-        });
+        this.server = app.listen(this.port);
     }
     /**
      * Stops the server process
@@ -130,7 +128,7 @@ class LOQED extends events_1.default {
             await axios_1.default.post(`http://${this.ip}/webhooks`, postData, {
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(0, commands_1.generateWebhookHeader)(this.bridgeKey, CryptoJS.enc.Utf8.parse(callbackUrl).concat(CryptoJS.lib.WordArray.create([0, constants_1.WEBHOOK_ALL_EVENTS_FLAG])))
+                    ...(0, commands_1.generateWebhookHeader)(this.bridgeKey, CryptoJS.enc.Utf8.parse(callbackUrl).concat(CryptoJS.lib.WordArray.create([constants_1.WEBHOOK_ALL_EVENTS_FLAG])))
                 }
             });
         }

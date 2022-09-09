@@ -12,6 +12,9 @@ Have a look at the `examples` folder to get started.
 
 ## Changelog
 
+### 1.0.0 (2022-09-09)
+* (foxriver76) added webhook registration
+
 ### 0.1.2 (2022-09-09)
 * (foxriver76) added new event
 

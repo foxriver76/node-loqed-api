@@ -48,7 +48,7 @@ function createCommand(action, lockId, secret) {
             base64command = makeCommand(lockId, 89, 2, secret);
             break;
         default:
-            console.error('Error no valid action');
+            throw new Error('Error no valid action');
     }
     if (!base64command) {
         // No command, bail out function and make sure to make the interface interactive again.
@@ -69,8 +69,8 @@ exports.getBin = getBin;
 /**
  * Prepare a command to send to the LOQED api
  *
- * @param action action to execute
  * @param lockId id of the lock
+ * @param commandType id of the command
  * @param action id of the action
  * @param secret api key not url encoded
  */
@@ -105,7 +105,7 @@ function makeCommand(lockId, commandType, action, secret) {
             command = messageId_bin.concat(getBin(protocol)).concat(getBin(commandType)).concat(getBin(action));
             break;
         default:
-            console.error('Unknown command type');
+            throw new Error('Unknown command type');
     }
     if (!command) {
         throw new Error('No valid command');
