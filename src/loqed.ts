@@ -16,17 +16,20 @@ type LOQEDEventType =
     | 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH'
     | 'GO_TO_STATE_INSTANTOPEN_OPEN';
 
+type LOQEDGoToState = 'OPEN' | 'DAY_LOCK' | 'NIGHT_LOCK';
+type LOQEDRequestedState = LOQEDGoToState & 'UNKNOWN';
+
 interface LOQEDEvent {
     mac_wifi: string;
     mac_ble: string;
     event_type: LOQEDEventType;
     key_local_id: number;
     /** Exists on STATE_CHANGED_XY */
-    requested_state?: string;
+    requested_state?: LOQEDRequestedState;
     /** Exists on STATE_CHANGED_XY */
     requested_state_numeric?: number;
     /** EXISTS on GO_TO_STATE_XY */
-    go_to_state?: string;
+    go_to_state?: LOQEDGoToState;
     /** no eventType for the following two */
     battery_percentage?: number;
     battery_type?: string;
@@ -81,6 +84,14 @@ export interface LOQEDStatusInformation {
     up_timestamp: number;
     wifi_strength: number;
     ble_strength: number;
+}
+
+export interface LOQED {
+    on(event: 'GO_TO_STATE', listener: (state: LOQEDGoToState) => void): this;
+    on(event: 'STATE_CHANGED', listener: (state: LOQEDRequestedState) => void): this;
+    on(event: 'UNKNOWN_EVENT', listener: (event: LOQEDEvent) => void): this;
+    on(event: 'BATTERY_LEVEL', listener: (batteryPercentage: number) => void): this;
+    on(event: 'BLE_STRENGTH', listener: (bleSignalStrength: number) => void): this;
 }
 
 export class LOQED extends EventEmitter {

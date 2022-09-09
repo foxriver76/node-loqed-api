@@ -12,6 +12,9 @@ Have a look at the `examples` folder to get started.
 
 ## Changelog
 
+### 1.1.3 (2022-09-09)
+* (foxriver76) types for emitted events
+
 ### 1.1.2 (2022-09-09)
 * (foxriver76) added additional events
 
