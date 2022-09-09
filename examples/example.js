@@ -42,6 +42,14 @@ const { LOQED } = require('./../build/loqed');
         console.log(`Lock state changed: ${state}`);
     });
 
+    loqedClient.on('BATTERY_LEVEL', state => {
+        console.log(`Battery state changed: ${state} %`);
+    });
+
+    loqedClient.on('BLE_STRENGTH', state => {
+        console.log(`BLE strength: ${state}`);
+    });
+
     const status = await loqedClient.getStatus();
     console.log(`Battery level: ${status.battery_percentage} %`);
     console.log(`Lock state: ${status.bolt_state}`);

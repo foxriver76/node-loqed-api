@@ -13,7 +13,8 @@ type LOQEDEventType =
     | 'MOTOR_STALL'
     | 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK'
     | 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN'
-    | 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH';
+    | 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH'
+    | 'GO_TO_STATE_INSTANTOPEN_OPEN';
 
 interface LOQEDEvent {
     mac_wifi: string;
@@ -26,6 +27,12 @@ interface LOQEDEvent {
     requested_state_numeric?: number;
     /** EXISTS on GO_TO_STATE_XY */
     go_to_state?: string;
+    /** no eventType for the following two */
+    battery_percentage?: number;
+    battery_type?: string;
+    /** following two separate event without eventType */
+    wifi_strength?: number;
+    ble_strength?: number;
 }
 
 interface LOQEDOptions {
@@ -119,21 +126,37 @@ export class LOQED extends EventEmitter {
         app.post('/', req => {
             const data: LOQEDEvent = req.body;
 
-            switch (data.event_type) {
-                case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK':
-                case 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN':
-                case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH':
-                    this.emit('GO_TO_STATE', data.go_to_state);
-                    break;
-                case 'STATE_CHANGED_LATCH':
-                case 'STATE_CHANGED_OPEN':
-                case 'STATE_CHANGED_NIGHT_LOCK':
-                case 'MOTOR_STALL':
-                    this.emit('STATE_CHANGED', data.requested_state);
-                    break;
-                default:
-                    this.emit('UNKNOWN_EVENT', data);
+            if ('event_type' in data) {
+                switch (data.event_type) {
+                    case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK':
+                    case 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN':
+                    case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH':
+                    case 'GO_TO_STATE_INSTANTOPEN_OPEN':
+                        this.emit('GO_TO_STATE', data.go_to_state);
+                        return;
+                    case 'STATE_CHANGED_LATCH':
+                    case 'STATE_CHANGED_OPEN':
+                    case 'STATE_CHANGED_NIGHT_LOCK':
+                    case 'MOTOR_STALL':
+                        this.emit('STATE_CHANGED', data.requested_state);
+                        return;
+                    default:
+                        this.emit('UNKNOWN_EVENT', data);
+                        return;
+                }
             }
+
+            if ('battery_percentage' in data) {
+                this.emit('BATTERY_LEVEL', data.requested_state);
+                return;
+            }
+
+            if ('ble_strength' in data) {
+                this.emit('BLE_STRENGTH', data.ble_strength);
+                return;
+            }
+
+            this.emit('UNKNOWN_EVENT', data);
         });
 
         this.server = app.listen(this.port);
