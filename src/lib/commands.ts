@@ -74,8 +74,8 @@ function makeCommand(lockId: number, commandType: CommandTypes, action: Actions,
     const messageId = 0;
     //CryptoJS.lib.WordArray.create([0, messageId]);
 
-    const messageIdBin = Buffer.alloc(4, 0);
-    messageIdBin.writeUint32BE(messageId);
+    const messageIdBin = Buffer.alloc(8, 0);
+    messageIdBin.writeUint32BE(messageId, 4);
 
     const protocol = 2;
     const deviceId = 1;
@@ -124,6 +124,7 @@ function makeCommand(lockId: number, commandType: CommandTypes, action: Actions,
                 getBin(protocol),
                 getBin(commandType),
                 timeNowBin,
+                // @ts-expect-error asfsafsf
                 encryptedBinaryHash,
                 getBin(lockId),
                 getBin(deviceId),

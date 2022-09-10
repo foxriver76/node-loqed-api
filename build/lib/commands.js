@@ -1,20 +1,22 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
+'use strict';
+const __importDefault =
+    (this && this.__importDefault) ||
+    function (mod) {
+        return mod && mod.__esModule ? mod : { default: mod };
+    };
+Object.defineProperty(exports, '__esModule', { value: true });
 exports.generateWebhookHeader = exports.getBin = exports.createCommand = void 0;
-const crypto_1 = __importDefault(require("crypto"));
-var Actions;
+const crypto_1 = __importDefault(require('crypto'));
+let Actions;
 (function (Actions) {
-    Actions[Actions["OPEN"] = 1] = "OPEN";
-    Actions[Actions["DAY_LOCK"] = 2] = "DAY_LOCK";
-    Actions[Actions["LOCK"] = 3] = "LOCK";
+    Actions[(Actions['OPEN'] = 1)] = 'OPEN';
+    Actions[(Actions['DAY_LOCK'] = 2)] = 'DAY_LOCK';
+    Actions[(Actions['LOCK'] = 3)] = 'LOCK';
 })(Actions || (Actions = {}));
-var CommandTypes;
+let CommandTypes;
 (function (CommandTypes) {
-    CommandTypes[CommandTypes["NORMAL"] = 7] = "NORMAL";
-    CommandTypes[CommandTypes["SPECIAL"] = 89] = "SPECIAL";
+    CommandTypes[(CommandTypes['NORMAL'] = 7)] = 'NORMAL';
+    CommandTypes[(CommandTypes['SPECIAL'] = 89)] = 'SPECIAL';
 })(CommandTypes || (CommandTypes = {}));
 /**
  * Creates the command encoded url
@@ -69,8 +71,8 @@ exports.getBin = getBin;
 function makeCommand(lockId, commandType, action, secret) {
     const messageId = 0;
     //CryptoJS.lib.WordArray.create([0, messageId]);
-    const messageIdBin = Buffer.alloc(4, 0);
-    messageIdBin.writeUint32BE(messageId);
+    const messageIdBin = Buffer.alloc(8, 0);
+    messageIdBin.writeUint32BE(messageId, 4);
     const protocol = 2;
     const deviceId = 1;
     const timestamp = Math.floor(Date.now() / 1000);
@@ -93,10 +95,13 @@ function makeCommand(lockId, commandType, action, secret) {
         getBin(deviceId),
         getBin(action)
     ]);
+
+    console.log(localGeneratedBinaryHash.toString('hex'));
     // const encrypted_binary_hash = CryptoJS.HmacSHA256(local_generated_binary_hash, secretBin);
-    const encryptedBinaryHash = Buffer.alloc(4, 0);
-    const _encryptedBinaryHash = crypto_1.default.createHmac('sha256', secretBin).update(localGeneratedBinaryHash).digest('hex');
-    encryptedBinaryHash.write(_encryptedBinaryHash, 'hex');
+    const encryptedBinaryHash = crypto_1.default
+        .createHmac('sha256', secretBin)
+        .update(localGeneratedBinaryHash)
+        .digest('hex');
     let command;
     switch (commandType) {
         case CommandTypes.NORMAL:
@@ -115,6 +120,7 @@ function makeCommand(lockId, commandType, action, secret) {
                 getBin(protocol),
                 getBin(commandType),
                 timeNowBin,
+                // @ts-expect-error asfsafsf
                 encryptedBinaryHash,
                 getBin(lockId),
                 getBin(deviceId),
@@ -151,3 +157,5 @@ function generateWebhookHeader(secret, input) {
 }
 exports.generateWebhookHeader = generateWebhookHeader;
 //# sourceMappingURL=commands.js.map
+
+console.log(makeCommand(2, 7, 1, '8yBMfXdZXZTOYHL5AKrBGt62J4Rvk0DMdJJilh6jen4'));
