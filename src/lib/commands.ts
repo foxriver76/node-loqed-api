@@ -1,10 +1,21 @@
-import * as CryptoJS from 'crypto-js';
+import crypto from 'crypto';
 
 export type LOQEDAction = 'open' | 'day_lock' | 'lock' | 'open_electronic_door';
 
 export interface LOQEDWebhookHeader {
     HASH: string;
     TIMESTAMP: string;
+}
+
+enum Actions {
+    OPEN = 1,
+    DAY_LOCK = 2,
+    LOCK = 3
+}
+
+enum CommandTypes {
+    NORMAL = 7,
+    SPECIAL = 89
 }
 
 /**
@@ -18,16 +29,16 @@ export function createCommand(action: LOQEDAction, lockId: number, secret: strin
     let base64command = null;
     switch (action) {
         case 'open':
-            base64command = makeCommand(lockId, 7, 1, secret);
+            base64command = makeCommand(lockId, CommandTypes.NORMAL, Actions.OPEN, secret);
             break;
         case 'day_lock':
-            base64command = makeCommand(lockId, 7, 2, secret);
+            base64command = makeCommand(lockId, CommandTypes.NORMAL, Actions.DAY_LOCK, secret);
             break;
         case 'lock':
-            base64command = makeCommand(lockId, 7, 3, secret);
+            base64command = makeCommand(lockId, CommandTypes.NORMAL, Actions.LOCK, secret);
             break;
         case 'open_electronic_door':
-            base64command = makeCommand(lockId, 89, 2, secret);
+            base64command = makeCommand(lockId, CommandTypes.SPECIAL, Actions.OPEN, secret);
             break;
         default:
             throw new Error('Error no valid action');
@@ -46,8 +57,9 @@ export function createCommand(action: LOQEDAction, lockId: number, secret: strin
  *
  * @param value number to parse as binary
  */
-export function getBin(value: number): CryptoJS.lib.WordArray {
-    return CryptoJS.enc.Utf8.parse(String.fromCharCode(value));
+export function getBin(value: number): Buffer {
+    //return CryptoJS.enc.Utf8.parse(String.fromCharCode(value));
+    return Buffer.from(String.fromCharCode(value), 'utf-8');
 }
 
 /**
@@ -58,40 +70,69 @@ export function getBin(value: number): CryptoJS.lib.WordArray {
  * @param action id of the action
  * @param secret api key not url encoded
  */
-function makeCommand(lockId: number, commandType: number, action: number, secret: string): string {
+function makeCommand(lockId: number, commandType: CommandTypes, action: Actions, secret: string): string {
     const messageId = 0;
-    const messageId_bin = CryptoJS.lib.WordArray.create([0, messageId]);
+    //CryptoJS.lib.WordArray.create([0, messageId]);
+
+    const messageIdBin = Buffer.alloc(8, 0);
+    messageIdBin.writeUint32BE(messageId, 4);
 
     const protocol = 2;
-    const device_id = 1;
-    const time = Math.floor(Date.now() / 1000);
+    const deviceId = 1;
+    const timestamp = Math.floor(Date.now() / 1000);
 
-    const secret_bin = CryptoJS.lib.WordArray.create(CryptoJS.enc.Base64.parse(secret).words.slice(0, 8));
-    const timenow_bin = CryptoJS.lib.WordArray.create([0, time]);
+    const secretBin = Buffer.from(secret, 'base64').slice(0, 32);
+    const timeNowBin = Buffer.alloc(8, 0);
+    timeNowBin.writeUint32BE(timestamp, 4);
 
+    /*
     const local_generated_binary_hash = getBin(protocol)
         .concat(getBin(commandType))
-        .concat(timenow_bin)
+        .concat(timeNowBin)
         .concat(getBin(lockId))
-        .concat(getBin(device_id))
+        .concat(getBin(deviceId))
         .concat(getBin(action));
+     */
 
-    const encrypted_binary_hash = CryptoJS.HmacSHA256(local_generated_binary_hash, secret_bin);
+    const localGeneratedBinaryHash = Buffer.concat([
+        getBin(protocol),
+        getBin(commandType),
+        timeNowBin,
+        getBin(lockId),
+        getBin(deviceId),
+        getBin(action)
+    ]);
 
-    let command = null;
+    // const encrypted_binary_hash = CryptoJS.HmacSHA256(local_generated_binary_hash, secretBin);
+    const encryptedBinaryHash = crypto.createHmac('sha256', secretBin).update(localGeneratedBinaryHash).digest();
+
+    let command: Buffer;
     switch (commandType) {
-        case 7:
-            command = messageId_bin
+        case CommandTypes.NORMAL:
+            /*
+            command = messageIdBin
                 .concat(getBin(protocol))
                 .concat(getBin(commandType))
-                .concat(timenow_bin)
-                .concat(encrypted_binary_hash)
+                .concat(timeNowBin)
+                .concat(encryptedBinaryHash)
                 .concat(getBin(lockId))
-                .concat(getBin(device_id))
+                .concat(getBin(deviceId))
                 .concat(getBin(action));
+                */
+            command = Buffer.concat([
+                messageIdBin,
+                getBin(protocol),
+                getBin(commandType),
+                timeNowBin,
+                encryptedBinaryHash,
+                getBin(lockId),
+                getBin(deviceId),
+                getBin(action)
+            ]);
             break;
-        case 89:
-            command = messageId_bin.concat(getBin(protocol)).concat(getBin(commandType)).concat(getBin(action));
+        case CommandTypes.SPECIAL:
+            //command = messageId_bin.concat(getBin(protocol)).concat(getBin(commandType)).concat(getBin(action));
+            command = Buffer.concat([messageIdBin, getBin(protocol), getBin(commandType), getBin(action)]);
             break;
         default:
             throw new Error('Unknown command type');
@@ -101,7 +142,8 @@ function makeCommand(lockId: number, commandType: number, action: number, secret
         throw new Error('No valid command');
     }
 
-    return CryptoJS.enc.Base64.stringify(command);
+    //return CryptoJS.enc.Base64.stringify(command);
+    return command.toString('base64');
 }
 
 /**
@@ -110,15 +152,16 @@ function makeCommand(lockId: number, commandType: number, action: number, secret
  * @param secret the auth token of the Bridge
  * @param input the input needed in the hash in addition to timestamp and auth token
  */
-export function generateWebhookHeader(secret: string, input: CryptoJS.lib.WordArray): LOQEDWebhookHeader {
+export function generateWebhookHeader(secret: string, input: Buffer): LOQEDWebhookHeader {
     const timestamp = Math.round(Date.now() / 1000);
 
-    const secretBin = CryptoJS.lib.WordArray.create(CryptoJS.enc.Base64.parse(secret).words.slice(0, 8));
-    const timeNowBin = CryptoJS.lib.WordArray.create([0, timestamp]);
+    const secretBin = Buffer.from(secret, 'base64').slice(0, 32);
+    const timeNowBin = Buffer.alloc(8, 0);
+    timeNowBin.writeUint32BE(timestamp, 4);
 
-    const localGeneratedBinaryHash = input.concat(timeNowBin.concat(secretBin));
+    const localGeneratedBinaryHash = Buffer.concat([input, timeNowBin, secretBin]);
 
-    const hash = CryptoJS.SHA256(localGeneratedBinaryHash).toString();
+    const hash = crypto.createHash('sha256').update(localGeneratedBinaryHash).digest('hex');
 
     return { TIMESTAMP: timestamp.toString(), HASH: hash };
 }
