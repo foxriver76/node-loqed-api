@@ -130,7 +130,7 @@ function makeCommand(lockId, commandType, action, secret) {
         throw new Error('No valid command');
     }
     //return CryptoJS.enc.Base64.stringify(command);
-    return command.toString('hex');
+    return command.toString('base64');
 }
 /**
  * Creates the webhook auth header

@@ -143,7 +143,7 @@ function makeCommand(lockId: number, commandType: CommandTypes, action: Actions,
     }
 
     //return CryptoJS.enc.Base64.stringify(command);
-    return command.toString('hex');
+    return command.toString('base64');
 }
 
 /**
