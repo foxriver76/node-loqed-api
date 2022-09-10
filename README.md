@@ -11,7 +11,7 @@ A node module for controlling the smart locks from LOQED via the LOQED API entir
 Have a look at the `examples` folder to get started.
 
 ## Changelog
-### 1.1.4 (2022-09-10)
+### 1.1.5 (2022-09-10)
 * (foxriver76) ported from cryptojs to node:crypto
 
 ### 1.1.3 (2022-09-09)

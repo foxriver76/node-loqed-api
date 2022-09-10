@@ -13,12 +13,6 @@ export interface LOQEDWebhookHeader {
  */
 export declare function createCommand(action: LOQEDAction, lockId: number, secret: string): string;
 /**
- * Parse number to binary
- *
- * @param value number to parse as binary
- */
-export declare function getBin(value: number): Buffer;
-/**
  * Creates the webhook auth header
  *
  * @param secret the auth token of the Bridge

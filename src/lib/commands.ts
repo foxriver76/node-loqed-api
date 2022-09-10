@@ -45,21 +45,10 @@ export function createCommand(action: LOQEDAction, lockId: number, secret: strin
     }
 
     if (!base64command) {
-        // No command, bail out function and make sure to make the interface interactive again.
         throw new Error('No valid command');
     }
 
     return encodeURIComponent(base64command);
-}
-
-/**
- * Parse number to binary
- *
- * @param value number to parse as binary
- */
-export function getBin(value: number): Buffer {
-    //return CryptoJS.enc.Utf8.parse(String.fromCharCode(value));
-    return Buffer.from(String.fromCharCode(value), 'utf-8');
 }
 
 /**
@@ -72,7 +61,6 @@ export function getBin(value: number): Buffer {
  */
 function makeCommand(lockId: number, commandType: CommandTypes, action: Actions, secret: string): string {
     const messageId = 0;
-    //CryptoJS.lib.WordArray.create([0, messageId]);
 
     const messageIdBin = Buffer.alloc(8, 0);
     messageIdBin.writeUint32BE(messageId, 4);
@@ -85,54 +73,38 @@ function makeCommand(lockId: number, commandType: CommandTypes, action: Actions,
     const timeNowBin = Buffer.alloc(8, 0);
     timeNowBin.writeUint32BE(timestamp, 4);
 
-    /*
-    const local_generated_binary_hash = getBin(protocol)
-        .concat(getBin(commandType))
-        .concat(timeNowBin)
-        .concat(getBin(lockId))
-        .concat(getBin(deviceId))
-        .concat(getBin(action));
-     */
-
     const localGeneratedBinaryHash = Buffer.concat([
-        getBin(protocol),
-        getBin(commandType),
+        Buffer.from([protocol]),
+        Buffer.from([commandType]),
         timeNowBin,
-        getBin(lockId),
-        getBin(deviceId),
-        getBin(action)
+        Buffer.from([lockId]),
+        Buffer.from([deviceId]),
+        Buffer.from([action])
     ]);
 
-    // const encrypted_binary_hash = CryptoJS.HmacSHA256(local_generated_binary_hash, secretBin);
     const encryptedBinaryHash = crypto.createHmac('sha256', secretBin).update(localGeneratedBinaryHash).digest();
 
     let command: Buffer;
     switch (commandType) {
         case CommandTypes.NORMAL:
-            /*
-            command = messageIdBin
-                .concat(getBin(protocol))
-                .concat(getBin(commandType))
-                .concat(timeNowBin)
-                .concat(encryptedBinaryHash)
-                .concat(getBin(lockId))
-                .concat(getBin(deviceId))
-                .concat(getBin(action));
-                */
             command = Buffer.concat([
                 messageIdBin,
-                getBin(protocol),
-                getBin(commandType),
+                Buffer.from([protocol]),
+                Buffer.from([commandType]),
                 timeNowBin,
                 encryptedBinaryHash,
-                getBin(lockId),
-                getBin(deviceId),
-                getBin(action)
+                Buffer.from([lockId]),
+                Buffer.from([deviceId]),
+                Buffer.from([action])
             ]);
             break;
         case CommandTypes.SPECIAL:
-            //command = messageId_bin.concat(getBin(protocol)).concat(getBin(commandType)).concat(getBin(action));
-            command = Buffer.concat([messageIdBin, getBin(protocol), getBin(commandType), getBin(action)]);
+            command = Buffer.concat([
+                messageIdBin,
+                Buffer.from([protocol]),
+                Buffer.from([commandType]),
+                Buffer.from([action])
+            ]);
             break;
         default:
             throw new Error('Unknown command type');
@@ -142,7 +114,6 @@ function makeCommand(lockId: number, commandType: CommandTypes, action: Actions,
         throw new Error('No valid command');
     }
 
-    //return CryptoJS.enc.Base64.stringify(command);
     return command.toString('base64');
 }
 
