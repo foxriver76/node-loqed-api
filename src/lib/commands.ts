@@ -104,7 +104,7 @@ function makeCommand(lockId: number, commandType: CommandTypes, action: Actions,
     ]);
 
     // const encrypted_binary_hash = CryptoJS.HmacSHA256(local_generated_binary_hash, secretBin);
-    const encryptedBinaryHash = crypto.createHmac('sha256', secretBin).update(localGeneratedBinaryHash).digest('hex');
+    const encryptedBinaryHash = crypto.createHmac('sha256', secretBin).update(localGeneratedBinaryHash).digest();
 
     let command: Buffer;
     switch (commandType) {
@@ -124,7 +124,6 @@ function makeCommand(lockId: number, commandType: CommandTypes, action: Actions,
                 getBin(protocol),
                 getBin(commandType),
                 timeNowBin,
-                // @ts-expect-error asfsafsf
                 encryptedBinaryHash,
                 getBin(lockId),
                 getBin(deviceId),
