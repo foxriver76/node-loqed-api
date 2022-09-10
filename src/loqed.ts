@@ -3,7 +3,6 @@ import express from 'express';
 import axios from 'axios';
 import { DEFAULT_PORT, WEBHOOK_ALL_EVENTS_FLAG } from './lib/constants';
 import { createCommand, generateWebhookHeader } from './lib/commands';
-import * as CryptoJS from 'crypto-js';
 import { Server } from 'net';
 
 type LOQEDEventType =
@@ -195,7 +194,7 @@ export class LOQED extends EventEmitter {
         try {
             const res = await axios.get(`http://${this.ip}/webhooks`, {
                 // @ts-expect-error it seems to be correct
-                headers: generateWebhookHeader(this.bridgeKey, CryptoJS.lib.WordArray.create())
+                headers: generateWebhookHeader(this.bridgeKey, Buffer.alloc(0))
             });
             return res.data;
         } catch (e: any) {
@@ -223,15 +222,13 @@ export class LOQED extends EventEmitter {
         };
 
         try {
+            const flagBin = Buffer.alloc(4, 0);
+            flagBin.writeInt32BE(WEBHOOK_ALL_EVENTS_FLAG);
+
             await axios.post(`http://${this.ip}/webhooks`, postData, {
                 headers: {
                     'Content-Type': 'application/json',
-                    ...generateWebhookHeader(
-                        this.bridgeKey,
-                        CryptoJS.enc.Utf8.parse(callbackUrl).concat(
-                            CryptoJS.lib.WordArray.create([WEBHOOK_ALL_EVENTS_FLAG])
-                        )
-                    )
+                    ...generateWebhookHeader(this.bridgeKey, Buffer.concat([Buffer.from(callbackUrl, 'utf8'), flagBin]))
                 }
             });
         } catch (e: any) {
@@ -246,9 +243,12 @@ export class LOQED extends EventEmitter {
      */
     async deleteWebhook(webhookId: number): Promise<void> {
         try {
+            const webhookIdBin = Buffer.alloc(8, 0);
+            webhookIdBin.writeUint32BE(webhookId, 4);
+
             await axios.delete(`http://${this.ip}/webhooks/${webhookId}`, {
                 // @ts-expect-error it seems to be correct
-                headers: generateWebhookHeader(this.bridgeKey, CryptoJS.lib.WordArray.create([0, webhookId]))
+                headers: generateWebhookHeader(this.bridgeKey, webhookIdBin)
             });
         } catch (e: any) {
             throw new Error(axios.isAxiosError(e) && e.response ? e.response.data : e.message);

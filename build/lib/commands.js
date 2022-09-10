@@ -1,30 +1,21 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateWebhookHeader = exports.getBin = exports.createCommand = void 0;
-const CryptoJS = __importStar(require("crypto-js"));
+const crypto_1 = __importDefault(require("crypto"));
+var Actions;
+(function (Actions) {
+    Actions[Actions["OPEN"] = 1] = "OPEN";
+    Actions[Actions["DAY_LOCK"] = 2] = "DAY_LOCK";
+    Actions[Actions["LOCK"] = 3] = "LOCK";
+})(Actions || (Actions = {}));
+var CommandTypes;
+(function (CommandTypes) {
+    CommandTypes[CommandTypes["NORMAL"] = 7] = "NORMAL";
+    CommandTypes[CommandTypes["SPECIAL"] = 89] = "SPECIAL";
+})(CommandTypes || (CommandTypes = {}));
 /**
  * Creates the command encoded url
  *
@@ -36,16 +27,16 @@ function createCommand(action, lockId, secret) {
     let base64command = null;
     switch (action) {
         case 'open':
-            base64command = makeCommand(lockId, 7, 1, secret);
+            base64command = makeCommand(lockId, CommandTypes.NORMAL, Actions.OPEN, secret);
             break;
         case 'day_lock':
-            base64command = makeCommand(lockId, 7, 2, secret);
+            base64command = makeCommand(lockId, CommandTypes.NORMAL, Actions.DAY_LOCK, secret);
             break;
         case 'lock':
-            base64command = makeCommand(lockId, 7, 3, secret);
+            base64command = makeCommand(lockId, CommandTypes.NORMAL, Actions.LOCK, secret);
             break;
         case 'open_electronic_door':
-            base64command = makeCommand(lockId, 89, 2, secret);
+            base64command = makeCommand(lockId, CommandTypes.SPECIAL, Actions.OPEN, secret);
             break;
         default:
             throw new Error('Error no valid action');
@@ -63,7 +54,8 @@ exports.createCommand = createCommand;
  * @param value number to parse as binary
  */
 function getBin(value) {
-    return CryptoJS.enc.Utf8.parse(String.fromCharCode(value));
+    //return CryptoJS.enc.Utf8.parse(String.fromCharCode(value));
+    return Buffer.from(String.fromCharCode(value), 'utf-8');
 }
 exports.getBin = getBin;
 /**
@@ -76,33 +68,62 @@ exports.getBin = getBin;
  */
 function makeCommand(lockId, commandType, action, secret) {
     const messageId = 0;
-    const messageId_bin = CryptoJS.lib.WordArray.create([0, messageId]);
+    //CryptoJS.lib.WordArray.create([0, messageId]);
+    const messageIdBin = Buffer.alloc(4, 0);
+    messageIdBin.writeUint32BE(messageId);
     const protocol = 2;
-    const device_id = 1;
-    const time = Math.floor(Date.now() / 1000);
-    const secret_bin = CryptoJS.lib.WordArray.create(CryptoJS.enc.Base64.parse(secret).words.slice(0, 8));
-    const timenow_bin = CryptoJS.lib.WordArray.create([0, time]);
+    const deviceId = 1;
+    const timestamp = Math.floor(Date.now() / 1000);
+    const secretBin = Buffer.from(secret, 'base64').slice(0, 32);
+    const timeNowBin = Buffer.alloc(8, 0);
+    timeNowBin.writeUint32BE(timestamp, 4);
+    /*
     const local_generated_binary_hash = getBin(protocol)
         .concat(getBin(commandType))
-        .concat(timenow_bin)
+        .concat(timeNowBin)
         .concat(getBin(lockId))
-        .concat(getBin(device_id))
+        .concat(getBin(deviceId))
         .concat(getBin(action));
-    const encrypted_binary_hash = CryptoJS.HmacSHA256(local_generated_binary_hash, secret_bin);
-    let command = null;
+     */
+    const localGeneratedBinaryHash = Buffer.concat([
+        getBin(protocol),
+        getBin(commandType),
+        timeNowBin,
+        getBin(lockId),
+        getBin(deviceId),
+        getBin(action)
+    ]);
+    // const encrypted_binary_hash = CryptoJS.HmacSHA256(local_generated_binary_hash, secretBin);
+    const encryptedBinaryHash = Buffer.alloc(4, 0);
+    const _encryptedBinaryHash = crypto_1.default.createHmac('sha256', secretBin).update(localGeneratedBinaryHash).digest('hex');
+    encryptedBinaryHash.write(_encryptedBinaryHash, 'hex');
+    let command;
     switch (commandType) {
-        case 7:
-            command = messageId_bin
+        case CommandTypes.NORMAL:
+            /*
+            command = messageIdBin
                 .concat(getBin(protocol))
                 .concat(getBin(commandType))
-                .concat(timenow_bin)
-                .concat(encrypted_binary_hash)
+                .concat(timeNowBin)
+                .concat(encryptedBinaryHash)
                 .concat(getBin(lockId))
-                .concat(getBin(device_id))
+                .concat(getBin(deviceId))
                 .concat(getBin(action));
+                */
+            command = Buffer.concat([
+                messageIdBin,
+                getBin(protocol),
+                getBin(commandType),
+                timeNowBin,
+                encryptedBinaryHash,
+                getBin(lockId),
+                getBin(deviceId),
+                getBin(action)
+            ]);
             break;
-        case 89:
-            command = messageId_bin.concat(getBin(protocol)).concat(getBin(commandType)).concat(getBin(action));
+        case CommandTypes.SPECIAL:
+            //command = messageId_bin.concat(getBin(protocol)).concat(getBin(commandType)).concat(getBin(action));
+            command = Buffer.concat([messageIdBin, getBin(protocol), getBin(commandType), getBin(action)]);
             break;
         default:
             throw new Error('Unknown command type');
@@ -110,7 +131,8 @@ function makeCommand(lockId, commandType, action, secret) {
     if (!command) {
         throw new Error('No valid command');
     }
-    return CryptoJS.enc.Base64.stringify(command);
+    //return CryptoJS.enc.Base64.stringify(command);
+    return command.toString('hex');
 }
 /**
  * Creates the webhook auth header
@@ -120,10 +142,11 @@ function makeCommand(lockId, commandType, action, secret) {
  */
 function generateWebhookHeader(secret, input) {
     const timestamp = Math.round(Date.now() / 1000);
-    const secretBin = CryptoJS.lib.WordArray.create(CryptoJS.enc.Base64.parse(secret).words.slice(0, 8));
-    const timeNowBin = CryptoJS.lib.WordArray.create([0, timestamp]);
-    const localGeneratedBinaryHash = input.concat(timeNowBin.concat(secretBin));
-    const hash = CryptoJS.SHA256(localGeneratedBinaryHash).toString();
+    const secretBin = Buffer.from(secret, 'base64').slice(0, 32);
+    const timeNowBin = Buffer.alloc(8, 0);
+    timeNowBin.writeUint32BE(timestamp, 4);
+    const localGeneratedBinaryHash = Buffer.concat([input, timeNowBin, secretBin]);
+    const hash = crypto_1.default.createHash('sha256').update(localGeneratedBinaryHash).digest('hex');
     return { TIMESTAMP: timestamp.toString(), HASH: hash };
 }
 exports.generateWebhookHeader = generateWebhookHeader;

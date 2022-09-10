@@ -24,7 +24,7 @@ const { LOQED } = require('./../build/loqed');
     }
 
     try {
-        await loqedClient.deleteWebhook(5);
+        await loqedClient.deleteWebhook(10);
         console.log('Webhook sucessfully deleted');
     } catch (e) {
         console.error(`Cannot delete webhook: ${e.message}`);

@@ -1,4 +1,4 @@
-import * as CryptoJS from 'crypto-js';
+/// <reference types="node" />
 export declare type LOQEDAction = 'open' | 'day_lock' | 'lock' | 'open_electronic_door';
 export interface LOQEDWebhookHeader {
     HASH: string;
@@ -17,11 +17,11 @@ export declare function createCommand(action: LOQEDAction, lockId: number, secre
  *
  * @param value number to parse as binary
  */
-export declare function getBin(value: number): CryptoJS.lib.WordArray;
+export declare function getBin(value: number): Buffer;
 /**
  * Creates the webhook auth header
  *
  * @param secret the auth token of the Bridge
  * @param input the input needed in the hash in addition to timestamp and auth token
  */
-export declare function generateWebhookHeader(secret: string, input: CryptoJS.lib.WordArray): LOQEDWebhookHeader;
+export declare function generateWebhookHeader(secret: string, input: Buffer): LOQEDWebhookHeader;
