@@ -1,4 +1,4 @@
-import EventEmitter from 'events';
+import EventEmitter from 'node:events';
 import express from 'express';
 import axios from 'axios';
 import { DEFAULT_PORT, WEBHOOK_ALL_EVENTS_FLAG } from './lib/constants';
@@ -13,7 +13,10 @@ type LOQEDEventType =
     | 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK'
     | 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN'
     | 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH'
-    | 'GO_TO_STATE_INSTANTOPEN_OPEN';
+    | 'GO_TO_STATE_INSTANTOPEN_OPEN'
+    | 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_PIN'
+    | 'GO_TO_STATE_MANUAL_UNLOCK_BLE_OPEN'
+    | 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_BUTTON';
 
 type LOQEDGoToState = 'OPEN' | 'DAY_LOCK' | 'NIGHT_LOCK';
 type LOQEDRequestedState = LOQEDGoToState & 'UNKNOWN';
@@ -142,6 +145,9 @@ export class LOQED extends EventEmitter {
                     case 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN':
                     case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH':
                     case 'GO_TO_STATE_INSTANTOPEN_OPEN':
+                    case 'GO_TO_STATE_MANUAL_UNLOCK_BLE_OPEN':
+                    case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_BUTTON':
+                    case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_PIN':
                         this.emit('GO_TO_STATE', data.go_to_state);
                         return;
                     case 'STATE_CHANGED_LATCH':

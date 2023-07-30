@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 export type LOQEDAction = 'open' | 'day_lock' | 'lock' | 'open_electronic_door';
 

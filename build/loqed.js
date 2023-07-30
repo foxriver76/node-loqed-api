@@ -4,12 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LOQED = void 0;
-const events_1 = __importDefault(require("events"));
+const node_events_1 = __importDefault(require("node:events"));
 const express_1 = __importDefault(require("express"));
 const axios_1 = __importDefault(require("axios"));
 const constants_1 = require("./lib/constants");
 const commands_1 = require("./lib/commands");
-class LOQED extends events_1.default {
+class LOQED extends node_events_1.default {
     constructor(options) {
         super();
         if (!options.ip) {
@@ -42,6 +42,9 @@ class LOQED extends events_1.default {
                     case 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN':
                     case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH':
                     case 'GO_TO_STATE_INSTANTOPEN_OPEN':
+                    case 'GO_TO_STATE_MANUAL_UNLOCK_BLE_OPEN':
+                    case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_BUTTON':
+                    case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_PIN':
                         this.emit('GO_TO_STATE', data.go_to_state);
                         return;
                     case 'STATE_CHANGED_LATCH':

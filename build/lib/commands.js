@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateWebhookHeader = exports.createCommand = void 0;
-const crypto_1 = __importDefault(require("crypto"));
+const node_crypto_1 = __importDefault(require("node:crypto"));
 var Actions;
 (function (Actions) {
     Actions[Actions["OPEN"] = 1] = "OPEN";
@@ -73,7 +73,7 @@ function makeCommand(lockId, commandType, action, secret) {
         Buffer.from([deviceId]),
         Buffer.from([action])
     ]);
-    const encryptedBinaryHash = crypto_1.default.createHmac('sha256', secretBin).update(localGeneratedBinaryHash).digest();
+    const encryptedBinaryHash = node_crypto_1.default.createHmac('sha256', secretBin).update(localGeneratedBinaryHash).digest();
     let command;
     switch (commandType) {
         case CommandTypes.NORMAL:
@@ -116,7 +116,7 @@ function generateWebhookHeader(secret, input) {
     const timeNowBin = Buffer.alloc(8, 0);
     timeNowBin.writeUint32BE(timestamp, 4);
     const localGeneratedBinaryHash = Buffer.concat([input, timeNowBin, secretBin]);
-    const hash = crypto_1.default.createHash('sha256').update(localGeneratedBinaryHash).digest('hex');
+    const hash = node_crypto_1.default.createHash('sha256').update(localGeneratedBinaryHash).digest('hex');
     return { TIMESTAMP: timestamp.toString(), HASH: hash };
 }
 exports.generateWebhookHeader = generateWebhookHeader;
