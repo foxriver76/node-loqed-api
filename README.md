@@ -11,6 +11,10 @@ A node module for controlling the smart locks from LOQED via the LOQED API entir
 Have a look at the `examples` folder to get started.
 
 ## Changelog
+
+### 1.2.1 (2023-08-07)
+* (foxriver76) added missing event `GO_TO_STATE_TWIST_ASSIST_LATCH`
+
 ### 1.2.0 (2023-07-30)
 * (foxriver76) added missing events `GO_TO_STATE_MANUAL_UNLOCK_BLE_OPEN`, `GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_BUTTON` and `GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_PIN`
 
