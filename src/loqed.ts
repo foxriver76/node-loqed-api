@@ -20,7 +20,7 @@ type LOQEDEventType =
     | 'GO_TO_STATE_TWIST_ASSIST_LATCH';
 
 type LOQEDGoToState = 'OPEN' | 'DAY_LOCK' | 'NIGHT_LOCK';
-type LOQEDRequestedState = LOQEDGoToState & 'UNKNOWN';
+type LOQEDRequestedState = LOQEDGoToState | 'UNKNOWN';
 
 interface LOQEDEvent {
     mac_wifi: string;

@@ -12,6 +12,9 @@ Have a look at the `examples` folder to get started.
 
 ## Changelog
 
+### 1.2.2 (2023-08-07)
+* (foxriver76) improved types
+
 ### 1.2.1 (2023-08-07)
 * (foxriver76) added missing event `GO_TO_STATE_TWIST_ASSIST_LATCH`
 
