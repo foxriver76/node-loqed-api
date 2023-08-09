@@ -1,5 +1,5 @@
 /// <reference types="node" />
-export declare type LOQEDAction = 'open' | 'day_lock' | 'lock' | 'open_electronic_door';
+export type LOQEDAction = 'open' | 'day_lock' | 'lock' | 'open_electronic_door';
 export interface LOQEDWebhookHeader {
     HASH: string;
     TIMESTAMP: string;

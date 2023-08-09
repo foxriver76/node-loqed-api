@@ -36,7 +36,7 @@ class LOQED extends node_events_1.default {
         app.use(express_1.default.json());
         app.post('/', req => {
             const data = req.body;
-            if ('event_type' in data) {
+            if (data.event_type !== undefined) {
                 switch (data.event_type) {
                     case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK':
                     case 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN':
@@ -46,25 +46,28 @@ class LOQED extends node_events_1.default {
                     case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_BUTTON':
                     case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_PIN':
                     case 'GO_TO_STATE_TWIST_ASSIST_LATCH':
-                        this.emit('GO_TO_STATE', data.go_to_state);
+                        this.emit('GO_TO_STATE', {
+                            val: data.go_to_state,
+                            localKeyId: data.key_local_id
+                        });
                         return;
                     case 'STATE_CHANGED_LATCH':
                     case 'STATE_CHANGED_OPEN':
                     case 'STATE_CHANGED_NIGHT_LOCK':
                     case 'MOTOR_STALL':
-                        this.emit('STATE_CHANGED', data.requested_state);
+                        this.emit('STATE_CHANGED', { val: data.requested_state });
                         return;
                     default:
                         this.emit('UNKNOWN_EVENT', data);
                         return;
                 }
             }
-            if ('battery_percentage' in data) {
-                this.emit('BATTERY_LEVEL', data.battery_percentage);
+            if (data.battery_percentage !== undefined) {
+                this.emit('BATTERY_LEVEL', { val: data.battery_percentage });
                 return;
             }
-            if ('ble_strength' in data) {
-                this.emit('BLE_STRENGTH', data.ble_strength);
+            if (data.ble_strength !== undefined) {
+                this.emit('BLE_STRENGTH', { val: data.ble_strength });
                 return;
             }
             this.emit('UNKNOWN_EVENT', data);

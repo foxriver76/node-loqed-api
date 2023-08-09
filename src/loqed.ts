@@ -5,11 +5,7 @@ import { DEFAULT_PORT, WEBHOOK_ALL_EVENTS_FLAG } from './lib/constants';
 import { createCommand, generateWebhookHeader } from './lib/commands';
 import { Server } from 'net';
 
-type LOQEDEventType =
-    | 'STATE_CHANGED_OPEN'
-    | 'STATE_CHANGED_LATCH'
-    | 'STATE_CHANGED_NIGHT_LOCK'
-    | 'MOTOR_STALL'
+type LOQEDGoToEventType =
     | 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK'
     | 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN'
     | 'GO_TO_STATE_MANUAL_LOCK_REMOTE_LATCH'
@@ -19,13 +15,21 @@ type LOQEDEventType =
     | 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_BUTTON'
     | 'GO_TO_STATE_TWIST_ASSIST_LATCH';
 
+type LOQEDEventType =
+    | LOQEDGoToEventType
+    | 'STATE_CHANGED_OPEN'
+    | 'STATE_CHANGED_LATCH'
+    | 'STATE_CHANGED_NIGHT_LOCK'
+    | 'MOTOR_STALL';
+
 type LOQEDGoToState = 'OPEN' | 'DAY_LOCK' | 'NIGHT_LOCK';
 type LOQEDRequestedState = LOQEDGoToState | 'UNKNOWN';
 
-interface LOQEDEvent {
+interface LOQEDBaseEvent {
     mac_wifi: string;
     mac_ble: string;
-    event_type: LOQEDEventType;
+    event_type?: LOQEDEventType;
+    /** key used to open the lock */
     key_local_id: number;
     /** Exists on STATE_CHANGED_XY */
     requested_state?: LOQEDRequestedState;
@@ -40,6 +44,26 @@ interface LOQEDEvent {
     wifi_strength?: number;
     ble_strength?: number;
 }
+
+interface LOQEDGoToEvent extends LOQEDBaseEvent {
+    go_to_state: LOQEDGoToState;
+    event_type: LOQEDGoToEventType;
+    requested_state: undefined;
+}
+
+interface LOQEDStateChangedEvent extends LOQEDBaseEvent {
+    go_to_state: undefined;
+    event_type: Exclude<LOQEDEventType, LOQEDGoToEventType>;
+    requested_state: LOQEDRequestedState;
+}
+
+interface LOQEDOtherEvent extends LOQEDBaseEvent {
+    go_to_state: undefined;
+    event_type: undefined;
+    requested_state: undefined;
+}
+
+type LOQEDEvent = LOQEDGoToEvent | LOQEDStateChangedEvent | LOQEDOtherEvent;
 
 interface LOQEDOptions {
     /** IP address of the bridge */
@@ -72,6 +96,32 @@ interface LOQEDRegisterdWebhook {
 
 type LOQEDWebhook = Omit<LOQEDRegisterdWebhook, 'id'>;
 
+interface LOQEDApiBaseEvent {
+    /** Value of the event */
+    val: unknown;
+}
+
+export interface LOQEDApiGoToEvent extends LOQEDApiBaseEvent {
+    /** target lock state */
+    val: LOQEDGoToState;
+    /** key used to open the lock */
+    localKeyId: number;
+}
+
+export interface LOQEDApiStateChangedEvent extends LOQEDApiBaseEvent {
+    /** current lock state */
+    val: LOQEDRequestedState;
+}
+export interface LOQEDApiBatteryEvent extends LOQEDApiBaseEvent {
+    /** Current battery level in % */
+    val: number;
+}
+
+export interface LOQEDApiBleStrengthEvent extends LOQEDApiBaseEvent {
+    /** Current BLE signal strength */
+    val: number;
+}
+
 export interface LOQEDStatusInformation {
     battery_percentage: number;
     battery_type: string;
@@ -90,11 +140,11 @@ export interface LOQEDStatusInformation {
 }
 
 export interface LOQED {
-    on(event: 'GO_TO_STATE', listener: (state: LOQEDGoToState) => void): this;
-    on(event: 'STATE_CHANGED', listener: (state: LOQEDRequestedState) => void): this;
+    on(event: 'GO_TO_STATE', listener: (state: LOQEDApiGoToEvent) => void): this;
+    on(event: 'STATE_CHANGED', listener: (state: LOQEDApiStateChangedEvent) => void): this;
     on(event: 'UNKNOWN_EVENT', listener: (event: LOQEDEvent) => void): this;
-    on(event: 'BATTERY_LEVEL', listener: (batteryPercentage: number) => void): this;
-    on(event: 'BLE_STRENGTH', listener: (bleSignalStrength: number) => void): this;
+    on(event: 'BATTERY_LEVEL', listener: (event: LOQEDApiBatteryEvent) => void): this;
+    on(event: 'BLE_STRENGTH', listener: (event: LOQEDApiBleStrengthEvent) => void): this;
 }
 
 export class LOQED extends EventEmitter {
@@ -140,7 +190,7 @@ export class LOQED extends EventEmitter {
         app.post('/', req => {
             const data: LOQEDEvent = req.body;
 
-            if ('event_type' in data) {
+            if (data.event_type !== undefined) {
                 switch (data.event_type) {
                     case 'GO_TO_STATE_MANUAL_LOCK_REMOTE_NIGHT_LOCK':
                     case 'GO_TO_STATE_MANUAL_UNLOCK_REMOTE_OPEN':
@@ -150,13 +200,16 @@ export class LOQED extends EventEmitter {
                     case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_BUTTON':
                     case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_PIN':
                     case 'GO_TO_STATE_TWIST_ASSIST_LATCH':
-                        this.emit('GO_TO_STATE', data.go_to_state);
+                        this.emit('GO_TO_STATE', {
+                            val: data.go_to_state,
+                            localKeyId: data.key_local_id
+                        } satisfies LOQEDApiGoToEvent);
                         return;
                     case 'STATE_CHANGED_LATCH':
                     case 'STATE_CHANGED_OPEN':
                     case 'STATE_CHANGED_NIGHT_LOCK':
                     case 'MOTOR_STALL':
-                        this.emit('STATE_CHANGED', data.requested_state);
+                        this.emit('STATE_CHANGED', { val: data.requested_state } satisfies LOQEDApiStateChangedEvent);
                         return;
                     default:
                         this.emit('UNKNOWN_EVENT', data);
@@ -164,13 +217,13 @@ export class LOQED extends EventEmitter {
                 }
             }
 
-            if ('battery_percentage' in data) {
-                this.emit('BATTERY_LEVEL', data.battery_percentage);
+            if (data.battery_percentage !== undefined) {
+                this.emit('BATTERY_LEVEL', { val: data.battery_percentage } satisfies LOQEDApiBatteryEvent);
                 return;
             }
 
-            if ('ble_strength' in data) {
-                this.emit('BLE_STRENGTH', data.ble_strength);
+            if (data.ble_strength !== undefined) {
+                this.emit('BLE_STRENGTH', { val: data.ble_strength } satisfies LOQEDApiBleStrengthEvent);
                 return;
             }
 

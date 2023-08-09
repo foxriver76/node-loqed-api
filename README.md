@@ -12,6 +12,11 @@ Have a look at the `examples` folder to get started.
 
 ## Changelog
 
+### 2.0.0 (2023-08-09)
+* (foxriver76) also transmit the local key id on lock events
+* (foxriver76) updated dependencies
+* (foxriver76) API now emits objects to allow emitting multiple values in one event **(BREAKING CHANGE!)**
+
 ### 1.2.2 (2023-08-07)
 * (foxriver76) improved types
 
