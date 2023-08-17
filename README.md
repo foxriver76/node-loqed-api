@@ -11,6 +11,8 @@ A node module for controlling the smart locks from LOQED via the LOQED API entir
 Have a look at the `examples` folder to get started.
 
 ## Changelog
+### 2.0.1 (2023-08-17)
+* (foxriver76) added two missing go_to events
 
 ### 2.0.0 (2023-08-09)
 * (foxriver76) also transmit the local key id on lock events

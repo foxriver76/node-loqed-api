@@ -13,7 +13,9 @@ type LOQEDGoToEventType =
     | 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_PIN'
     | 'GO_TO_STATE_MANUAL_UNLOCK_BLE_OPEN'
     | 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_BUTTON'
-    | 'GO_TO_STATE_TWIST_ASSIST_LATCH';
+    | 'GO_TO_STATE_TWIST_ASSIST_LATCH'
+    | 'GO_TO_STATE_MANUAL_LOCK_BLE_NIGHT_LOCK'
+    | 'GO_TO_STATE_TWIST_ASSIST_LOCK';
 
 type LOQEDEventType =
     | LOQEDGoToEventType
@@ -200,6 +202,8 @@ export class LOQED extends EventEmitter {
                     case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_BUTTON':
                     case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_PIN':
                     case 'GO_TO_STATE_TWIST_ASSIST_LATCH':
+                    case 'GO_TO_STATE_TWIST_ASSIST_LOCK':
+                    case 'GO_TO_STATE_MANUAL_LOCK_BLE_NIGHT_LOCK':
                         this.emit('GO_TO_STATE', {
                             val: data.go_to_state,
                             localKeyId: data.key_local_id

@@ -46,6 +46,8 @@ class LOQED extends node_events_1.default {
                     case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_BUTTON':
                     case 'GO_TO_STATE_MANUAL_UNLOCK_VIA_OUTSIDE_MODULE_PIN':
                     case 'GO_TO_STATE_TWIST_ASSIST_LATCH':
+                    case 'GO_TO_STATE_TWIST_ASSIST_LOCK':
+                    case 'GO_TO_STATE_MANUAL_LOCK_BLE_NIGHT_LOCK':
                         this.emit('GO_TO_STATE', {
                             val: data.go_to_state,
                             localKeyId: data.key_local_id
